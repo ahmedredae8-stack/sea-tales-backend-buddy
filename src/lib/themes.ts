@@ -32,7 +32,7 @@ import eiffelBurnedImg from "@/assets/scenes/eiffel-burned.jpg.asset.json";
 const CDN_ORIGIN = "https://void-trading-post.lovable.app";
 
 function cdn(url: string) {
-  return url.startsWith("https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/") ? CDN_ORIGIN + url : url;
+  return url.startsWith("/__l5e/") ? CDN_ORIGIN + url : url;
 }
 
 export type Phase = "day" | "night";
