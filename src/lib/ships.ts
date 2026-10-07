@@ -26,7 +26,7 @@ export const ships: Ship[] = [
   {
     id: "skiff",
     name: "قارب الصياد",
-    img: "/__l5e/assets-v1/f34ddec0-d384-4997-a219-1a74d9c055c1/ship-1.png",
+    img: "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/f34ddec0-d384-4997-a219-1a74d9c055c1/ship-1.png",
     price: 450,
     currency: "coin",
     rarity: "common",
@@ -39,7 +39,7 @@ export const ships: Ship[] = [
   {
     id: "trawler",
     name: "سفينة الجرّ الحمراء",
-    img: "/__l5e/assets-v1/f60212f3-0bb3-49c0-ae04-7860ab9bed58/ship-2.png",
+    img: "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/f60212f3-0bb3-49c0-ae04-7860ab9bed58/ship-2.png",
     price: 3500,
     currency: "coin",
     rarity: "common",
@@ -52,7 +52,7 @@ export const ships: Ship[] = [
   {
     id: "cruiser",
     name: "الطرّاد البحري",
-    img: "/__l5e/assets-v1/af657176-bbb4-4691-a017-c7fb08718907/ship-3.png",
+    img: "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/af657176-bbb4-4691-a017-c7fb08718907/ship-3.png",
     price: 10000,
     currency: "coin",
     rarity: "rare",
@@ -65,7 +65,7 @@ export const ships: Ship[] = [
   {
     id: "yacht",
     name: "اليخت الملكي",
-    img: "/__l5e/assets-v1/76dfcca9-6816-4045-bbd5-65b6a37b7814/ship-4.png",
+    img: "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/76dfcca9-6816-4045-bbd5-65b6a37b7814/ship-4.png",
     price: 50000,
     currency: "coin",
     rarity: "epic",
@@ -78,7 +78,7 @@ export const ships: Ship[] = [
   {
     id: "galleon",
     name: "غاليون القراصنة",
-    img: "/__l5e/assets-v1/58e8c314-d7a0-42be-a4ee-5be92cb15110/ship-5.png",
+    img: "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/58e8c314-d7a0-42be-a4ee-5be92cb15110/ship-5.png",
     price: 120,
     currency: "gem",
     rarity: "epic",
@@ -91,7 +91,7 @@ export const ships: Ship[] = [
   {
     id: "flagship",
     name: "سفينة العرش الذهبية",
-    img: "/__l5e/assets-v1/4e21753a-1ed8-42ed-a00e-c22e258d43ca/ship-6.png",
+    img: "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/4e21753a-1ed8-42ed-a00e-c22e258d43ca/ship-6.png",
     price: 950,
     currency: "gem",
     rarity: "legendary",
@@ -111,7 +111,7 @@ export function fmt(n: number) {
  * One painted strip holds the whole dock line-up, and the flagship
  * carries three upgrade tiers behind their own tabs. */
 
-export const SHIP_STRIP = "/__l5e/assets-v1/956b5518-6f15-4d72-bbc5-e1de01e77fda/ship-strip.png";
+export const SHIP_STRIP = "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/956b5518-6f15-4d72-bbc5-e1de01e77fda/ship-strip.png";
 
 export type ShipTier = {
   star: 1 | 2 | 3;
@@ -132,13 +132,13 @@ export type ShipTier = {
 export const FLAGSHIP = {
   id: "royal-galleon",
   name: "الغاليون الملكي",
-  hero: "/__l5e/assets-v1/bfad0654-27c5-40f3-833d-13ad7d89c243/ship-hero.png",
+  hero: "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/bfad0654-27c5-40f3-833d-13ad7d89c243/ship-hero.png",
   desc: "سفينة القيادة — ترقّها نجمة بعد نجمة فتزيد حمولتها وسرعة صيدها.",
   tiers: [
     {
       star: 1,
       label: "نجمة",
-      img: "/__l5e/assets-v1/082aa67f-b846-4413-961b-53e6f5a85359/hero-t1.png",
+      img: "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/082aa67f-b846-4413-961b-53e6f5a85359/hero-t1.png",
       hp: 2400,
       armor: 120,
       speed: 5,
@@ -152,7 +152,7 @@ export const FLAGSHIP = {
     {
       star: 2,
       label: "نجمتان",
-      img: "/__l5e/assets-v1/cb2fad6b-9418-400a-abfe-ca9d02e57644/hero-t2.png",
+      img: "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/cb2fad6b-9418-400a-abfe-ca9d02e57644/hero-t2.png",
       hp: 4800,
       armor: 260,
       speed: 7,
@@ -166,7 +166,7 @@ export const FLAGSHIP = {
     {
       star: 3,
       label: "ثلاث نجوم",
-      img: "/__l5e/assets-v1/12b7cc54-e923-4f9e-aec9-7ecf9e085f95/hero-t3.png",
+      img: "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/12b7cc54-e923-4f9e-aec9-7ecf9e085f95/hero-t3.png",
       hp: 9600,
       armor: 520,
       speed: 10,

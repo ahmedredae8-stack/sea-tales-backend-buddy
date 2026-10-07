@@ -144,7 +144,7 @@ function ProductPicker({ items }: { items: Product[] }) {
           <Button variant="ghost" size="icon" aria-label="زيادة" onClick={() => setQty((n) => Math.min(99, n + 1))}><Plus /></Button>
         </span>
         <Button className="product-buy buy-confirm" disabled title="الشراء غير متاح حالياً">
-          <img src={picked.currency === "coin" ? "/__l5e/assets-v1/906f37c0-d530-4e50-a3ce-00deaaf40a02/coin.png" : "/__l5e/assets-v1/81b9318d-8399-478f-bd28-abec7665a1a6/gem.png"} alt="" />
+          <img src={picked.currency === "coin" ? "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/906f37c0-d530-4e50-a3ce-00deaaf40a02/coin.png" : "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/81b9318d-8399-478f-bd28-abec7665a1a6/gem.png"} alt="" />
           {total === 0 ? "مجاني" : fmt(total)} · غير متاح
         </Button>
       </footer>

@@ -20,10 +20,10 @@ export function QuestBoard() {
   return (
     <section className="quest-board">
       <header className="quest-head">
-        <img src="/__l5e/assets-v1/1b52eadc-9045-47f2-9648-efe6cc13c79c/quest.png" alt="" className="h-7 w-7 object-contain" />
+        <img src="https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/1b52eadc-9045-47f2-9648-efe6cc13c79c/quest.png" alt="" className="h-7 w-7 object-contain" />
         <h2>المهام اليومية</h2>
         <span className="quest-gems">
-          <img src="/__l5e/assets-v1/81b9318d-8399-478f-bd28-abec7665a1a6/gem.png" alt="" className="h-4 w-4" />
+          <img src="https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/81b9318d-8399-478f-bd28-abec7665a1a6/gem.png" alt="" className="h-4 w-4" />
           {state.gems}
         </span>
       </header>

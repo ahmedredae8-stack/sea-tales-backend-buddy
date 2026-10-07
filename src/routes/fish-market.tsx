@@ -32,12 +32,12 @@ type Catch = {
 };
 
 const CATCH: Catch[] = [
-  { id: "sardine", name: "سردين", img: "/__l5e/assets-v1/25365535-261c-4a49-a6e3-842b94b8a2d8/fish-sardine.png", tier: "شائع", base: 1.2, stock: 7517, quality: 100 },
-  { id: "mackerel", name: "ماكريل", img: "/__l5e/assets-v1/ffebb842-1d7a-4cd2-9fae-d66883e496e6/fish-mackerel.png", tier: "شائع", base: 3.4, stock: 4210, quality: 92 },
-  { id: "tuna", name: "تونة", img: "/__l5e/assets-v1/d40f7c1c-8c7f-47ec-89a0-120eaa992bde/fish-tuna.png", tier: "نادر", base: 9.2, stock: 1860, quality: 88 },
-  { id: "swordfish", name: "سمك السيف", img: "/__l5e/assets-v1/c3244a96-c3a8-495b-ac9e-2ece36ee74e6/fish-swordfish.png", tier: "ملحمي", base: 17.5, stock: 640, quality: 76 },
-  { id: "turtle", name: "سلحفاة", img: "/__l5e/assets-v1/67e96dc8-9734-4101-8659-09807e61e0af/fish-turtle.png", tier: "ملحمي", base: 21.4, stock: 310, quality: 95 },
-  { id: "pearl", name: "محار اللؤلؤ", img: "/__l5e/assets-v1/4b0616ca-5528-47ea-8c87-3ea157b6de3e/fish-pearl.png", tier: "أسطوري", base: 48, stock: 96, quality: 100 },
+  { id: "sardine", name: "سردين", img: "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/25365535-261c-4a49-a6e3-842b94b8a2d8/fish-sardine.png", tier: "شائع", base: 1.2, stock: 7517, quality: 100 },
+  { id: "mackerel", name: "ماكريل", img: "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/ffebb842-1d7a-4cd2-9fae-d66883e496e6/fish-mackerel.png", tier: "شائع", base: 3.4, stock: 4210, quality: 92 },
+  { id: "tuna", name: "تونة", img: "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/d40f7c1c-8c7f-47ec-89a0-120eaa992bde/fish-tuna.png", tier: "نادر", base: 9.2, stock: 1860, quality: 88 },
+  { id: "swordfish", name: "سمك السيف", img: "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/c3244a96-c3a8-495b-ac9e-2ece36ee74e6/fish-swordfish.png", tier: "ملحمي", base: 17.5, stock: 640, quality: 76 },
+  { id: "turtle", name: "سلحفاة", img: "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/67e96dc8-9734-4101-8659-09807e61e0af/fish-turtle.png", tier: "ملحمي", base: 21.4, stock: 310, quality: 95 },
+  { id: "pearl", name: "محار اللؤلؤ", img: "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/4b0616ca-5528-47ea-8c87-3ea157b6de3e/fish-pearl.png", tier: "أسطوري", base: 48, stock: 96, quality: 100 },
 ];
 
 const HOURS = ["4 pm", "5 pm", "6 pm", "7 pm", "8 pm", "9 pm", "10 pm", "11 pm", "12 pm", "1 am", "2 am", "3 am"];
@@ -92,7 +92,7 @@ export function FishMarket() {
         </Link>
         <h1 className="min-w-0 flex-1 truncate text-lg font-black text-[var(--gold)] drop-shadow">سوق السمك</h1>
         <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-black/50 px-3 py-1 text-sm font-black text-[var(--gold)]">
-          <img src="/__l5e/assets-v1/906f37c0-d530-4e50-a3ce-00deaaf40a02/coin.png" alt="" className="h-4 w-4" />
+          <img src="https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/906f37c0-d530-4e50-a3ce-00deaaf40a02/coin.png" alt="" className="h-4 w-4" />
           {coins.toLocaleString("en-US")}
         </span>
       </header>
@@ -167,7 +167,7 @@ export function FishMarket() {
             className="fish-range"
           />
           <p className="flex items-center justify-center gap-1.5 text-sm font-black text-emerald-300">
-            <img src="/__l5e/assets-v1/906f37c0-d530-4e50-a3ce-00deaaf40a02/coin.png" alt="" className="h-4 w-4" />
+            <img src="https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/906f37c0-d530-4e50-a3ce-00deaaf40a02/coin.png" alt="" className="h-4 w-4" />
             {Math.round(qty * price).toLocaleString("en-US")}
           </p>
         </div>

@@ -183,7 +183,7 @@ function Index() {
           aria-label={sound ? "كتم الصوت" : "تشغيل الصوت"}
           className="ctl-btn"
         >
-          <img src={sound ? "/__l5e/assets-v1/e24c9aca-fd04-4d5a-be7b-20f0b53a804c/sound-on.png" : "/__l5e/assets-v1/8ee818c7-e155-4144-8305-1820d57e279a/sound-off.png"} alt="" className="h-6 w-6 object-contain" />
+          <img src={sound ? "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/e24c9aca-fd04-4d5a-be7b-20f0b53a804c/sound-on.png" : "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/8ee818c7-e155-4144-8305-1820d57e279a/sound-off.png"} alt="" className="h-6 w-6 object-contain" />
         </button>
         <button
           type="button"

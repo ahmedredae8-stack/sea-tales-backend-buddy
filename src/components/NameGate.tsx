@@ -35,7 +35,7 @@ export function NameGate({ onReady }: { onReady: (p: Player) => void }) {
   return (
     <div className="auth-card" dir="rtl">
       <div className="auth-crest">
-        <img src="/__l5e/assets-v1/b44ac0a6-9b58-447c-a5ae-2fc774a4f53c/logo.png" alt="" draggable={false} />
+        <img src="https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/b44ac0a6-9b58-447c-a5ae-2fc774a4f53c/logo.png" alt="" draggable={false} />
       </div>
 
       <h1 className="auth-title">{mode === "login" ? "عودة القبطان" : "قبطان جديد"}</h1>

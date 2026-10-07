@@ -2,9 +2,9 @@ import { CaptainAvatar, nameSeed } from "@/components/GameSprite";
 import { Crown, Gift, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-const coinArt = { url: "/__l5e/assets-v1/906f37c0-d530-4e50-a3ce-00deaaf40a02/coin.png" };
-const gemArt = { url: "/__l5e/assets-v1/81b9318d-8399-478f-bd28-abec7665a1a6/gem.png" };
-const fishArt = { url: "/__l5e/assets-v1/d40f7c1c-8c7f-47ec-89a0-120eaa992bde/fish-tuna.png" };
+const coinArt = { url: "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/906f37c0-d530-4e50-a3ce-00deaaf40a02/coin.png" };
+const gemArt = { url: "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/81b9318d-8399-478f-bd28-abec7665a1a6/gem.png" };
+const fishArt = { url: "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/d40f7c1c-8c7f-47ec-89a0-120eaa992bde/fish-tuna.png" };
 
 type Props = {
   name: string;

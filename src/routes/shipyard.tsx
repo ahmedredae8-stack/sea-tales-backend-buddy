@@ -94,7 +94,7 @@ export function Shipyard() {
                 </span>
                 <span className="mt-0.5 block truncate text-xs text-white/55">{s.desc}</span>
                 <span className="mt-2 flex items-center gap-1.5 text-sm font-black text-[var(--gold)]">
-                  <img src={s.currency === "coin" ? "/__l5e/assets-v1/906f37c0-d530-4e50-a3ce-00deaaf40a02/coin.png" : "/__l5e/assets-v1/81b9318d-8399-478f-bd28-abec7665a1a6/gem.png"} alt="" className="h-4 w-4" />
+                  <img src={s.currency === "coin" ? "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/906f37c0-d530-4e50-a3ce-00deaaf40a02/coin.png" : "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/81b9318d-8399-478f-bd28-abec7665a1a6/gem.png"} alt="" className="h-4 w-4" />
                   {fmt(s.price)}
                 </span>
               </span>
@@ -123,9 +123,9 @@ export function Shipyard() {
 
             <div className="mt-3 flex justify-center gap-3">
               {[
-                { id: "dock" as const, img: "/__l5e/assets-v1/aeaa94a5-0adf-4b22-ae52-9e1740a462a3/act-dock.png", label: "ذهاب ورجوع" },
-                { id: "sell" as const, img: "/__l5e/assets-v1/c5b717ba-5f44-4e1c-b012-74296b9d2175/act-sail.png", label: "بيع السفينة" },
-                { id: "crew" as const, img: "/__l5e/assets-v1/f29ed123-2209-4423-a9f2-f05adfb07583/act-crew.png", label: "الطاقم" },
+                { id: "dock" as const, img: "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/aeaa94a5-0adf-4b22-ae52-9e1740a462a3/act-dock.png", label: "ذهاب ورجوع" },
+                { id: "sell" as const, img: "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/c5b717ba-5f44-4e1c-b012-74296b9d2175/act-sail.png", label: "بيع السفينة" },
+                { id: "crew" as const, img: "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/f29ed123-2209-4423-a9f2-f05adfb07583/act-crew.png", label: "الطاقم" },
               ].map((a) => (
                 <button
                   key={a.id}
@@ -195,7 +195,7 @@ export function Shipyard() {
                     }}
                     className="mx-auto flex items-center gap-2 rounded-2xl bg-gradient-to-b from-rose-500 to-rose-700 px-6 py-2 text-sm font-black shadow-lg transition hover:brightness-110"
                   >
-                    <img src="/__l5e/assets-v1/906f37c0-d530-4e50-a3ce-00deaaf40a02/coin.png" alt="" className="h-4 w-4" />
+                    <img src="https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/906f37c0-d530-4e50-a3ce-00deaaf40a02/coin.png" alt="" className="h-4 w-4" />
                     بيع · {fmt(Math.round(open.price * 0.6))}
                   </button>
                 </div>
@@ -218,7 +218,7 @@ export function Shipyard() {
                         }}
                         className="flex shrink-0 items-center gap-1 rounded-lg bg-[var(--gold)] px-2.5 py-1 text-xs font-black text-black"
                       >
-                        <img src={c.currency === "coin" ? "/__l5e/assets-v1/906f37c0-d530-4e50-a3ce-00deaaf40a02/coin.png" : "/__l5e/assets-v1/81b9318d-8399-478f-bd28-abec7665a1a6/gem.png"} alt="" className="h-3.5 w-3.5" />
+                        <img src={c.currency === "coin" ? "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/906f37c0-d530-4e50-a3ce-00deaaf40a02/coin.png" : "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/81b9318d-8399-478f-bd28-abec7665a1a6/gem.png"} alt="" className="h-3.5 w-3.5" />
                         {fmt(c.price)} · {c.hours}H
                       </button>
                     </li>
@@ -232,7 +232,7 @@ export function Shipyard() {
               onClick={() => playSfx("click", 0.8)}
               className="mt-3 flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-b from-[var(--gold)] to-[var(--gold-deep)] py-2.5 text-sm font-black text-black transition hover:brightness-110"
             >
-              <img src={open.currency === "coin" ? "/__l5e/assets-v1/906f37c0-d530-4e50-a3ce-00deaaf40a02/coin.png" : "/__l5e/assets-v1/81b9318d-8399-478f-bd28-abec7665a1a6/gem.png"} alt="" className="h-4 w-4" />
+              <img src={open.currency === "coin" ? "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/906f37c0-d530-4e50-a3ce-00deaaf40a02/coin.png" : "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/81b9318d-8399-478f-bd28-abec7665a1a6/gem.png"} alt="" className="h-4 w-4" />
               شراء · {fmt(open.price)}
             </button>
           </div>
