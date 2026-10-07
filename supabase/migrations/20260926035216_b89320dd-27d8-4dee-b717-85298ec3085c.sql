@@ -1,0 +1,1 @@
+ALTER FUNCTION public.owns_player(uuid) SECURITY INVOKER; REVOKE ALL ON FUNCTION public.owns_player(uuid) FROM PUBLIC, anon; GRANT EXECUTE ON FUNCTION public.owns_player(uuid) TO authenticated;
