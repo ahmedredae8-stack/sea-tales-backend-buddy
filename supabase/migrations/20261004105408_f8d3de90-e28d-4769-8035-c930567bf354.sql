@@ -1,0 +1,16 @@
+CREATE SCHEMA IF NOT EXISTS private;
+GRANT USAGE ON SCHEMA private TO authenticated;
+CREATE FUNCTION private.has_role(_user_id uuid, _role public.app_role) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public AS $$ SELECT EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = _user_id AND role = _role) $$;
+REVOKE ALL ON FUNCTION private.has_role(uuid, public.app_role) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION private.has_role(uuid, public.app_role) TO authenticated;
+DROP POLICY "admins upload artwork" ON public.artwork_poses;
+DROP POLICY "admins edit artwork" ON public.artwork_poses;
+DROP POLICY "admins remove artwork" ON public.artwork_poses;
+DROP POLICY "admins publish fleet layouts" ON public.fleet_layout;
+DROP POLICY "admins update fleet layouts" ON public.fleet_layout;
+DROP FUNCTION public.has_role(uuid, public.app_role);
+CREATE POLICY "admins upload artwork" ON public.artwork_poses FOR INSERT TO authenticated WITH CHECK (private.has_role(auth.uid(), 'admin') AND created_by = auth.uid() AND image_path LIKE auth.uid()::text || '/%');
+CREATE POLICY "admins edit artwork" ON public.artwork_poses FOR UPDATE TO authenticated USING (private.has_role(auth.uid(), 'admin')) WITH CHECK (private.has_role(auth.uid(), 'admin'));
+CREATE POLICY "admins remove artwork" ON public.artwork_poses FOR DELETE TO authenticated USING (private.has_role(auth.uid(), 'admin'));
+CREATE POLICY "admins publish fleet layouts" ON public.fleet_layout FOR INSERT TO authenticated WITH CHECK (private.has_role(auth.uid(), 'admin'));
+CREATE POLICY "admins update fleet layouts" ON public.fleet_layout FOR UPDATE TO authenticated USING (private.has_role(auth.uid(), 'admin')) WITH CHECK (private.has_role(auth.uid(), 'admin'));
