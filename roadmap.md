@@ -6,6 +6,9 @@
 
 ## Existing follow-up work
 - [ ] Rebuild the admin studio around the actual ship catalog, pose artwork, and editable store pricing.
+- [ ] Make admin ship and rocket artwork uploads persist and appear in the store and live game.
+- [ ] Restore every island/ocean background from assets owned by this project.
+- [ ] Remove the floating sound control and keep its function inside settings.
 - [ ] Make the supplied fleet coordinates the shared defaults and verify publishing for new players.
 - [ ] Prepare and verify the Vercel deployment configuration.
 - [ ] Replace legacy ship artwork across the island ship market and store with the unified catalog.
