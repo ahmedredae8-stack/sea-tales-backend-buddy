@@ -9,6 +9,7 @@ import { fmt } from "@/lib/ships";
 
 import { currentPhase, phaseLabel, themes } from "@/lib/themes";
 import { playSfx } from "@/lib/sound";
+import { useArtworkMap } from "@/lib/artwork";
 
 type StoreTab = "gems" | "crew" | "weapons" | "armor" | "ships" | "worlds";
 type Product = {
@@ -40,8 +41,9 @@ export function GameStore({ activeId, onSelect, onClose }: { activeId: string; o
     { id: "worlds" as const, label: "خلفيات", icon: Crown },
   ];
 
+  const art = useArtworkMap();
   const products = useMemo<Product[]>(() => {
-    if (tab === "weapons") return WEAPONS.map((item, index) => ({ id: item.id, title: item.name, desc: `${item.desc} · قوة تدميرية ${item.power * 1000}`, price: item.price, currency: item.currency, art: <GameSprite atlas="weapon" index={index} /> }));
+    if (tab === "weapons") return WEAPONS.map((item, index) => ({ id: item.id, title: item.name, desc: `${item.desc} · قوة تدميرية ${item.power * 1000}`, price: item.price, currency: item.currency, art: art[`${item.id}:idle`] ? <img src={art[`${item.id}:idle`]} alt="" loading="lazy" /> : <GameSprite atlas="weapon" index={index} /> }));
     if (tab === "crew") return CREWS.map((item, index) => ({ id: item.id, title: item.name, desc: `${item.desc} · ${item.hours}H`, price: item.price, currency: item.currency, art: <GameSprite atlas="crew" index={index} /> }));
     if (tab === "armor") return ARMORS.map((item, index) => ({ id: item.id, title: item.name, desc: `${item.desc} · دفاع ${item.defense * 500}`, price: item.price, currency: item.currency, art: <GameSprite atlas="armor" index={index} /> }));
     if (tab === "ships")
@@ -51,11 +53,11 @@ export function GameStore({ activeId, onSelect, onClose }: { activeId: string; o
         desc: `${ship.fish.join(" · ")} · رحلة ${tripLabel(ship.tripSeconds)}${ship.source === "tribe" ? " · من القبيلة" : ""}`,
         price: ship.price,
         currency: ship.currency,
-        art: <img src={ship.hull} alt="" loading="lazy" />,
+        art: <img src={art[`ship-${ship.id}:idle`] ?? ship.hull} alt="" loading="lazy" />,
       }));
 
     return [];
-  }, [tab]);
+  }, [tab, art]);
 
   return (
     <div className="game-modal" role="dialog" aria-modal="true" aria-label="المتجر البحري" onClick={onClose}>
