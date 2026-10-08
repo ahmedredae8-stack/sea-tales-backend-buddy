@@ -27,12 +27,13 @@ import eiffelNightImg from "@/assets/scenes/eiffel-night.jpg.asset.json";
 import eiffelBurnedVid from "@/assets/scenes/eiffel-burned.mp4.asset.json";
 import eiffelBurnedImg from "@/assets/scenes/eiffel-burned.jpg.asset.json";
 
-/** Scene media lives on the Lovable CDN. Outside Lovable hosting (e.g. Vercel)
- *  the relative /__l5e path 404s, so always resolve to the absolute CDN origin. */
-const CDN_ORIGIN = "https://void-trading-post.lovable.app";
+/** Scene media is owned by this project's asset storage. */
+const CDN_ORIGIN = "https://sea-tales-backend-buddy.lovable.app";
 
 function cdn(url: string) {
-  return url.startsWith("/__l5e/") ? CDN_ORIGIN + url : url;
+  if (!url.startsWith("/__l5e/")) return url;
+  if (typeof window !== "undefined" && window.location.hostname.endsWith("lovable.app")) return url;
+  return CDN_ORIGIN + url;
 }
 
 export type Phase = "day" | "night";
