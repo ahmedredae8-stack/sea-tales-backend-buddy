@@ -36,9 +36,7 @@ export function ChatPage() {
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative min-h-[100svh] bg-[oklch(0.17_0.04_250)] text-white">
-      <div className="pointer-events-none absolute inset-0 opacity-45 [background:radial-gradient(60%_45%_at_80%_0%,color-mix(in_oklab,var(--sea-light)_28%,transparent),transparent),radial-gradient(50%_40%_at_10%_100%,color-mix(in_oklab,var(--gold)_18%,transparent),transparent)]" />
-      <div className="relative">{children}</div>
+    <div className="game-chat"><div className="chat-shell">{children}</div>
     </div>
   );
 }
@@ -60,6 +58,7 @@ function ChatRoom({ me }: { me: Player }) {
   const [people, setPeople] = useState<Record<string, Player>>({ [me.id]: me });
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState("");
   const [sidebar, setSidebar] = useState(false);
   const [section, setSection] = useState<"friends" | "public" | "tribe">("public");
   const [tribeMember, setTribeMember] = useState(false);
@@ -139,7 +138,7 @@ function ChatRoom({ me }: { me: Player }) {
       .channel("chat-messages")
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, (payload) => {
         const m = payload.new as Message;
-        if (!belongs(m)) return;
+        if (section === "tribe" || !belongs(m)) return;
         setMessages((prev) => (prev.some((x) => x.id === m.id) ? prev : [...prev, m]));
         void hydrate([m.sender_id]);
       })
@@ -150,7 +149,8 @@ function ChatRoom({ me }: { me: Player }) {
   }, [belongs, hydrate, section]);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
+    const list = endRef.current?.parentElement;
+    list?.scrollTo({ top: list.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
   useEffect(() => {
@@ -162,6 +162,7 @@ function ChatRoom({ me }: { me: Player }) {
     const body = text.trim();
     if (!body || sending) return;
     setSending(true);
+    setSendError("");
     setText("");
     playSfx("click", 0.4);
     const { error } = await supabase.from("messages").insert({
@@ -169,7 +170,7 @@ function ChatRoom({ me }: { me: Player }) {
       recipient_id: active === PUBLIC ? null : active,
       body: body.slice(0, 500),
     });
-    if (error) setText(body);
+    if (error) { setText(body); setSendError("تعذّر إرسال الرسالة. حاول مرة أخرى."); }
     setSending(false);
     inputRef.current?.focus();
   };
@@ -177,15 +178,13 @@ function ChatRoom({ me }: { me: Player }) {
   const grouped = useMemo(() => messages, [messages]);
 
   return (
-    <div className="mx-auto flex h-[100svh] max-w-6xl" dir="rtl">
+    <div className="chat-room" dir="rtl">
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 right-0 z-30 w-72 shrink-0 border-l border-white/10 bg-[oklch(0.2_0.045_252)]/95 backdrop-blur-xl transition-transform md:static md:translate-x-0 ${
-          sidebar ? "translate-x-0" : "translate-x-full"
-        }`}
+        className={`chat-sidebar ${sidebar ? "chat-sidebar-open" : ""}`}
       >
         <div className="flex items-center justify-between px-4 py-4">
-          <Link to="/" className="rounded-lg p-2 text-white/70 transition hover:bg-white/10 hover:text-white" aria-label="رجوع للقرية">
+          <Link to="/" className="rounded-lg p-2 text-hud-subtle transition hover:bg-hud-surface hover:text-hud-text" aria-label="رجوع للقرية">
             <ArrowRight className="h-5 w-5" />
           </Link>
           <span className="text-sm font-bold tracking-wide text-[var(--gold)]">دردشة الخليج</span>
@@ -193,7 +192,7 @@ function ChatRoom({ me }: { me: Player }) {
 
         <nav className="space-y-1 px-3 pb-4">
           <ConversationRow
-            active={active === PUBLIC}
+            active={active === PUBLIC && section === "public"}
             title="الغرفة العامة"
             subtitle="كل القباطنة"
             onClick={() => {
@@ -203,11 +202,11 @@ function ChatRoom({ me }: { me: Player }) {
             icon={<Globe2 className="h-5 w-5" />}
           />
 
-          <p className="px-2 pb-1 pt-4 text-xs font-semibold text-white/40">الأصدقاء</p>
+          <p className="px-2 pb-1 pt-4 text-xs font-semibold text-hud-subtle">الأصدقاء</p>
           {friends.length === 0 && (
             <Link
               to="/friends"
-              className="flex items-center gap-2 rounded-xl px-3 py-3 text-sm text-white/60 transition hover:bg-white/5"
+              className="flex items-center gap-2 rounded-lg px-3 py-3 text-sm text-hud-subtle transition hover:bg-hud-surface"
             >
               <Users className="h-4 w-4" /> أضف أصدقاء لبدء محادثة خاصة
             </Link>
@@ -221,6 +220,7 @@ function ChatRoom({ me }: { me: Player }) {
               online={isOnline(f.last_seen)}
               onClick={() => {
                 setActive(f.id);
+                setSection("friends");
                 setSidebar(false);
               }}
               icon={<Avatar name={f.name} />}
@@ -228,45 +228,45 @@ function ChatRoom({ me }: { me: Player }) {
           ))}
         </nav>
 
-        <div className="absolute inset-x-0 bottom-0 border-t border-white/10 px-4 py-3">
+        <div className="absolute inset-x-0 bottom-0 border-t border-hud-edge px-4 py-3">
           <div className="flex items-center gap-2">
             <Avatar name={me.name} gold />
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold">{me.name}</p>
-              <p className="text-xs text-emerald-400">متصل</p>
+              <p className="text-xs text-hud-aqua">متصل</p>
             </div>
           </div>
         </div>
       </aside>
 
       {sidebar && (
-        <button
+        <Button variant="ghost"
           aria-label="إغلاق القائمة"
-          className="fixed inset-0 z-20 bg-black/50 md:hidden"
+          className="chat-sidebar-scrim"
           onClick={() => setSidebar(false)}
         />
       )}
 
       {/* Conversation */}
-      <section className="flex min-w-0 flex-1 flex-col">
+      <section className="chat-conversation">
         <nav className="dock-tabs" aria-label="قنوات الدردشة">
           {([ ["friends", "الأصدقاء", Users], ["public", "العام", Globe2], ["tribe", "القبيلة", Shield] ] as const).map(([id, label, Icon]) => (
             <Button key={id} variant="ghost" className={section === id ? "dock-tab active" : "dock-tab"} onClick={() => { setSection(id); if (id === "public") setActive(PUBLIC); if (id === "friends") setSidebar(true); else setSidebar(false); }}><Icon size={16} />{label}</Button>
           ))}
         </nav>
         {section === "tribe" ? <div className="dock-empty"><Shield size={42} /><strong>{tribeMember ? "دردشة القبيلة" : "لم تنضم إلى قبيلة بعد"}</strong><span>{tribeMember ? "قناة القبيلة غير متاحة بعد." : "انضم إلى قبيلة من نافذتها أولاً."}</span></div> : <>
-        <header className="flex items-center gap-3 border-b border-white/10 px-4 py-3 backdrop-blur">
-          <button
-            className="rounded-lg p-2 text-white/70 transition hover:bg-white/10 md:hidden"
+        <header className="flex items-center gap-3 border-b border-hud-edge px-4 py-3 backdrop-blur">
+          <Button variant="ghost"
+            className="chat-menu-toggle"
             onClick={() => setSidebar(true)}
             aria-label="فتح المحادثات"
           >
             <Menu className="h-5 w-5" />
-          </button>
-          {activeFriend ? <Avatar name={activeFriend.name} /> : <div className="rounded-xl bg-white/10 p-2"><Globe2 className="h-5 w-5" /></div>}
+          </Button>
+          {activeFriend ? <Avatar name={activeFriend.name} /> : <div className="rounded-lg bg-hud-surface p-2"><Globe2 className="h-5 w-5" /></div>}
           <div className="min-w-0">
             <h1 className="truncate font-bold">{activeFriend ? activeFriend.name : "الغرفة العامة"}</h1>
-            <p className="text-xs text-white/50">
+            <p className="text-xs text-hud-subtle">
               {activeFriend
                 ? isOnline(activeFriend.last_seen)
                   ? "متصل الآن"
@@ -276,9 +276,9 @@ function ChatRoom({ me }: { me: Player }) {
           </div>
         </header>
 
-        <div className="flex-1 space-y-3 overflow-y-auto px-4 py-5">
+        <div className="chat-message-list">
           {grouped.length === 0 && (
-            <p className="mt-16 text-center text-sm text-white/45">
+            <p className="mt-16 text-center text-sm text-hud-subtle">
               لا توجد رسائل بعد — كن أول من يكتب ⚓
             </p>
           )}
@@ -296,15 +296,15 @@ function ChatRoom({ me }: { me: Player }) {
                 <div className={`max-w-[78%] ${mine ? "text-left" : "text-right"}`}>
                   {showName && <p className="mb-1 px-1 text-xs text-[var(--gold)]">{sender?.name ?? "لاعب"}</p>}
                   <div
-                    className={`rounded-2xl px-4 py-2 text-sm leading-relaxed shadow-lg ${
+                    className={`rounded-lg px-4 py-2 text-sm leading-relaxed shadow-lg ${
                       mine
-                        ? "rounded-bl-sm bg-gradient-to-l from-[var(--gold-deep)] to-[var(--gold)] text-black"
-                        : "rounded-br-sm bg-white/10 text-white"
+                        ? "rounded-bl-sm chat-bubble-own"
+                        : "rounded-br-sm bg-hud-surface text-hud-text"
                     }`}
                   >
                     <span className="whitespace-pre-wrap break-words">{m.body}</span>
                   </div>
-                  <p className="mt-1 px-1 text-[10px] text-white/35">{timeLabel(m.created_at)}</p>
+                  <p className="mt-1 px-1 text-[10px] text-hud-subtle">{timeLabel(m.created_at)}</p>
                 </div>
               </div>
             );
@@ -312,24 +312,26 @@ function ChatRoom({ me }: { me: Player }) {
           <div ref={endRef} />
         </div>
 
-        <form onSubmit={send} className="border-t border-white/10 px-3 py-3">
-          <div className="flex items-center gap-2 rounded-2xl border border-white/10 bg-black/25 px-3 py-2 focus-within:border-[var(--gold)]">
+        {sendError && <p role="alert" className="chat-send-error">{sendError}</p>}
+        <form onSubmit={send} className="border-t border-hud-edge px-3 py-3">
+          <div className="flex items-center gap-2 rounded-lg border border-hud-edge bg-hud-glass px-3 py-2 focus-within:border-[var(--gold)]">
             <input
               ref={inputRef}
               value={text}
               maxLength={500}
               onChange={(e) => setText(e.target.value)}
+              aria-label="نص الرسالة"
               placeholder={activeFriend ? `اكتب إلى ${activeFriend.name}...` : "اكتب رسالة للجميع..."}
-              className="min-w-0 flex-1 bg-transparent py-2 text-sm outline-none placeholder:text-white/35"
+              className="min-w-0 flex-1 bg-transparent py-2 text-sm outline-none placeholder:text-hud-subtle"
             />
-            <button
+            <Button variant="ghost"
               type="submit"
               disabled={!text.trim() || sending}
               aria-label="إرسال"
-              className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--gold)] to-[var(--gold-deep)] text-black transition hover:brightness-110 disabled:opacity-40"
+              className="flex h-9 w-9 items-center justify-center rounded-lg chat-gold-control transition hover:brightness-110 disabled:opacity-40"
             >
               {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4 rotate-180" />}
-            </button>
+            </Button>
           </div>
         </form>
         </>}
@@ -354,30 +356,30 @@ function ConversationRow({
   online?: boolean;
 }) {
   return (
-    <button
+    <Button variant="ghost"
       onClick={onClick}
-      className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-right transition ${
-        active ? "bg-[color-mix(in_oklab,var(--gold)_18%,transparent)] ring-1 ring-[var(--gold)]/40" : "hover:bg-white/5"
+      className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-right transition ${
+        active ? "bg-[color-mix(in_oklab,var(--gold)_18%,transparent)] ring-1 ring-[var(--gold)]/40" : "hover:bg-hud-surface"
       }`}
     >
       <span className="relative">
         {icon}
-        {online && <span className="absolute -bottom-0.5 -left-0.5 h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-[oklch(0.2_0.045_252)]" />}
+        {online && <span className="absolute -bottom-0.5 -left-0.5 h-2.5 w-2.5 rounded-full bg-hud-aqua ring-2 ring-[oklch(0.2_0.045_252)]" />}
       </span>
       <span className="min-w-0">
         <span className="block truncate text-sm font-semibold">{title}</span>
-        <span className="block truncate text-xs text-white/45">{subtitle}</span>
+        <span className="block truncate text-xs text-hud-subtle">{subtitle}</span>
       </span>
-    </button>
+    </Button>
   );
 }
 
 function Avatar({ name, small, gold }: { name: string; small?: boolean; gold?: boolean }) {
   return (
     <span
-      className={`flex items-center justify-center rounded-xl font-bold ${
+      className={`flex items-center justify-center rounded-lg font-bold ${
         small ? "h-7 w-7 text-[10px]" : "h-10 w-10 text-xs"
-      } ${gold ? "bg-gradient-to-br from-[var(--gold)] to-[var(--gold-deep)] text-black" : "bg-white/10 text-white"}`}
+      } ${gold ? "chat-gold-control" : "bg-hud-surface text-hud-text"}`}
     >
       {initials(name)}
     </span>

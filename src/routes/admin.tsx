@@ -12,7 +12,7 @@ export const Route = createFileRoute("/admin")({
 
 function AdminPage() {
   const [ok, setOk] = useState<boolean | null>(null);
-  useEffect(() => { void isArtworkAdmin().then(setOk); }, []);
+  useEffect(() => { void isArtworkAdmin().then(setOk).catch(() => setOk(false)); }, []);
   return <main className="social-page" dir="rtl"><div className="social-wrap"><header className="social-titlebar"><Link to="/" className="icon-control" aria-label="رجوع"><ArrowRight /></Link><div><span>للمشرفين</span><h1>استوديو الوضعيات</h1></div></header>
     {ok === null ? <p className="dock-loading">جارٍ التحقق…</p> : ok ? <ArtworkStudio /> : <div className="dock-empty"><ShieldAlert size={40} /><strong>هذه الصفحة للمشرفين فقط</strong><span>سجّل الدخول بحساب لديه صلاحية الإدارة.</span></div>}
   </div></main>;

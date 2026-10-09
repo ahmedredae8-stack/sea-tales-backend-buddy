@@ -2248,3 +2248,98 @@
 .store-product.item-card .product-art > * { width: 100%; height: 100%; object-fit: contain; }
 .store-product.item-card .product-copy { width: 100%; align-self: start; }
 .store-product.item-card .product-copy strong { line-height: 1.25; }
+
+/* Shared in-sea social screens. */
+@theme inline {
+  --color-hud-text: var(--hud-text);
+  --color-hud-subtle: var(--hud-subtle);
+  --color-hud-edge: var(--hud-edge);
+  --color-hud-surface: var(--hud-surface);
+  --color-hud-glass: var(--hud-glass);
+  --color-hud-aqua: var(--hud-aqua);
+  --color-game-gold: var(--gold);
+}
+.phase-control { position: absolute; left: 0.75rem; top: 8.1rem; z-index: 10; }
+.win-overlay { position: absolute; }
+.win-frame { max-height: calc(100% - 1rem); }
+.win-embed { color: var(--hud-text); }
+.social-page { min-height: 100svh; color: var(--hud-text); background: var(--hud-glass); }
+.social-wrap { width: min(100%, 48rem); margin: auto; padding: 1rem; }
+.social-titlebar { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+.social-titlebar h1 { font-size: 1.35rem; font-weight: 800; }
+.social-titlebar span, .social-wrap small, .social-wrap p { color: var(--hud-subtle); }
+.social-titlebar > svg { margin-inline-start: auto; color: var(--gold); }
+.account-banner { display: flex; align-items: center; gap: 1rem; padding-bottom: 1.2rem; border-bottom: 1px solid var(--gold-deep); }
+.account-banner > .game-sprite { width: 5rem; height: 5rem; flex: none; border: 1px solid var(--gold); border-radius: 6px; }
+.account-banner h2 { font-size: 1.3rem; font-weight: 800; overflow-wrap: anywhere; }
+.account-banner > svg { margin-inline-start: auto; flex: none; color: var(--hud-aqua); }
+.settings-section-title { padding: 1rem 0 0.5rem; color: var(--gold); font-size: 0.85rem; font-weight: 700; }
+.setting-row { display: flex; align-items: center; gap: 0.8rem; padding: 1rem 0; border-bottom: 1px solid var(--hud-edge); }
+.setting-row h3 { font-size: 0.95rem; font-weight: 700; }
+.setting-row p { font-size: 0.75rem; }
+.setting-icon { display: grid; place-items: center; width: 2.6rem; height: 2.6rem; flex: none; color: var(--gold); background: var(--hud-surface); border-radius: 6px; }
+.game-switch { margin-inline-start: auto; flex: none; width: 2.9rem; height: 1.6rem; border-radius: 999px; padding: 3px; background: var(--hud-surface); border: 1px solid var(--hud-edge); }
+.game-switch span { display: block; width: 1.1rem; height: 1.1rem; border-radius: 50%; background: var(--hud-subtle); transform: translateX(-0.65rem); transition: transform 150ms; }
+.game-switch.switch-on { background: var(--gold-deep); border-color: var(--gold); }
+.game-switch.switch-on span { background: var(--hud-text); transform: translateX(0.65rem); }
+.logout-button { margin-top: 1.2rem; width: 100%; }
+.tribe-hero { display: flex; align-items: center; flex-wrap: wrap; gap: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--gold-deep); }
+.tribe-hero-emblem { width: 5rem; height: 5rem; object-fit: contain; }
+.tribe-hero-text { flex: 1; min-width: 9rem; }
+.tribe-hero-text h2 { font-size: 1.25rem; font-weight: 800; color: var(--gold); }
+.tribe-rank { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.75rem; margin-top: 0.5rem; }
+.tribe-create, .tribe-leave, .tribe-board button, .tribe-members button { border: 1px solid var(--gold-deep); color: var(--gold); }
+.tribe-block { padding: 1rem 0; border-bottom: 1px solid var(--hud-edge); }
+.tribe-block h3 { display: flex; gap: 0.5rem; align-items: center; color: var(--gold); font-weight: 700; margin-bottom: 0.75rem; }
+.tribe-board, .tribe-members, .tribe-quests { display: grid; gap: 0.5rem; }
+.tribe-board li, .tribe-members li, .tribe-quests li { display: flex; align-items: center; gap: 0.6rem; padding: 0.7rem; background: var(--hud-surface); border: 1px solid var(--hud-edge); border-radius: 5px; }
+.tribe-board img, .tribe-member-face { width: 2.5rem; height: 2.5rem; object-fit: contain; flex: none; }
+.tribe-board li > div, .tribe-members li > div { flex: 1; min-width: 0; }
+.tribe-board small, .tribe-members small { display: block; font-size: 0.7rem; }
+.tribe-board strong { overflow-wrap: anywhere; }
+.tribe-board b, .tribe-place { color: var(--gold); font-variant-numeric: tabular-nums; }
+.tribe-quests button { margin-inline-start: auto; }
+.tribe-empty { text-align: center; padding: 1.5rem 0; }
+.tribe-form { display: grid; gap: 0.75rem; padding: 1rem 0; }
+.tribe-form input { width: 100%; background: var(--hud-glass); border: 1px solid var(--hud-edge); border-radius: 5px; padding: 0.7rem; color: var(--hud-text); }
+.tribe-emblems { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.tribe-emblem { width: 3.5rem; height: 3.5rem; padding: 0.3rem; border: 1px solid var(--hud-edge); }
+.tribe-emblem img { width: 100%; height: 100%; object-fit: contain; }
+.tribe-emblem-on { border-color: var(--gold); background: var(--hud-surface); }
+.social-error, .chat-send-error { padding: 0.6rem; color: var(--gold); }
+.game-chat { color: var(--hud-text); background: var(--hud-glass); }
+.chat-shell { height: 100%; }
+.chat-room { position: relative; display: flex; height: 100svh; min-height: 0; overflow: hidden; }
+.win-embed > .game-chat { height: 32rem !important; max-height: 64svh; }
+.chat-sidebar { position: absolute; inset-block: 0; right: 0; width: min(16rem, 86%); z-index: 3; transform: translateX(101%); transition: transform 180ms; background: var(--hud-glass); border-left: 1px solid var(--gold-deep); padding-bottom: 5rem; overflow-y: auto; }
+.chat-sidebar-open { transform: none; }
+.chat-sidebar-scrim { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; background: var(--hud-shadow); border-radius: 0; }
+.chat-conversation { display: flex; flex-direction: column; min-width: 0; min-height: 0; flex: 1; }
+.chat-menu-toggle { flex: none; color: var(--gold); }
+.chat-message-list { flex: 1; min-height: 0; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.8rem; }
+.chat-bubble-own, .chat-gold-control { background: var(--gold); color: var(--hud-glass); }
+.win-embed .chat-shell > .dock-empty { min-height: 0 !important; height: 100%; }
+.win-embed .chat-shell > .flex { min-height: 0; height: 100%; }
+.art-studio { color: var(--hud-text); display: grid; gap: 1rem; }
+.art-studio-head { display: flex; gap: 0.8rem; align-items: center; padding-bottom: 1rem; border-bottom: 1px solid var(--gold-deep); }
+.art-studio-head svg, .art-studio h3 { color: var(--gold); }
+.art-studio-head h2 { font-weight: 800; font-size: 1.2rem; }
+.art-mode { display: flex; gap: 0.5rem; }
+.art-mode button { border: 1px solid var(--hud-edge); color: var(--hud-text); }
+.art-mode button.active { border-color: var(--gold); background: var(--hud-surface); }
+.art-label { display: grid; gap: 0.5rem; }
+.art-label input { background: var(--hud-glass); color: var(--hud-text); border: 1px solid var(--hud-edge); border-radius: 5px; padding: 0.6rem; }
+.art-library { display: grid; gap: 0.5rem; }
+.art-record { display: flex; min-width: 0; height: auto; white-space: normal; align-items: center; gap: 0.7rem; border: 1px solid var(--hud-edge); background: var(--hud-surface); border-radius: 5px; padding: 0.6rem; }
+.art-record.active { border-color: var(--gold); }
+.art-record small { display: block; color: var(--hud-subtle); font-size: 0.72rem; }
+.art-record strong { color: var(--hud-text); overflow-wrap: anywhere; }
+.art-record-image { display: grid; place-items: center; width: 4rem; height: 3rem; flex: none; }
+.art-record-image img { width: 100%; height: 100%; object-fit: contain; }
+.art-status { color: var(--gold); }
+.win-embed .chat-room { height: 100%; }
+.win-embed .game-chat .chat-shell { height: 100%; }
+@media (min-width: 900px) {
+  .chat-sidebar { position: relative; transform: none; flex: 0 0 14rem; }
+  .chat-menu-toggle, .chat-sidebar-scrim { display: none; }
+}

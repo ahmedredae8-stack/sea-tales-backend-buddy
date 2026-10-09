@@ -30,11 +30,13 @@ export async function artworkUrl(path: string) {
 }
 
 /** Map of "<itemKey>:<pose>" → signed image URL for admin-published art. */
+export const ARTWORK_UPDATED = "island-bay:artwork-updated";
+
 export function useArtworkMap() {
   const [map, setMap] = useState<Record<string, string>>({});
   useEffect(() => {
     let alive = true;
-    void (async () => {
+    const refresh = async () => {
       try {
         const rows = await listArtwork();
         const entries: [string, string][] = [];
@@ -46,8 +48,17 @@ export function useArtworkMap() {
         }
         if (alive) setMap(Object.fromEntries(entries));
       } catch { /* fall back to bundled art */ }
-    })();
-    return () => { alive = false; };
+    };
+    void refresh();
+    window.addEventListener(ARTWORK_UPDATED, refresh);
+    window.addEventListener("focus", refresh);
+    const timer = window.setInterval(refresh, 180_000);
+    return () => {
+      alive = false;
+      window.removeEventListener(ARTWORK_UPDATED, refresh);
+      window.removeEventListener("focus", refresh);
+      window.clearInterval(timer);
+    };
   }, []);
   return map;
 }

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Crown, Flag, Loader2, LogOut, Plus, Shield, Swords, Trophy } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { CaptainAvatar } from "@/components/GameSprite";
 import { usePlayer } from "@/hooks/usePlayer";
 import { playSfx } from "@/lib/sound";
@@ -46,19 +47,22 @@ export function TribesPage() {
   const [creating, setCreating] = useState(false);
   const [name, setName] = useState("");
   const [motto, setMotto] = useState("");
-  const [emblem, setEmblem] = useState(EMBLEMS[0]!.id);
+  const [emblem, setEmblem] = useState(EMBLEMS[0]?.id ?? "skull");
   const [error, setError] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
-    const list = await listTribes();
-    setTribes(list);
-    if (player) {
-      const m = await myMembership(player.id);
-      setMine(m);
-      setMembers(m ? await listMembers(m.tribe_id) : []);
-    }
-    setLoading(false);
+    setError(null);
+    try {
+      const list = await listTribes();
+      setTribes(list);
+      if (player) {
+        const m = await myMembership(player.id);
+        setMine(m);
+        setMembers(m ? await listMembers(m.tribe_id) : []);
+      } else { setMine(null); setMembers([]); }
+    } catch { setError("تعذّر تحميل القبائل. حاول مرة أخرى."); }
+    finally { setLoading(false); }
   }, [player]);
 
   useEffect(() => {
@@ -94,9 +98,10 @@ export function TribesPage() {
           <Swords />
         </header>
 
+        {error && <div className="social-error" role="alert">{error}<Button variant="ghost" onClick={() => void refresh()}>إعادة المحاولة</Button></div>}
         {loading ? (
           <div className="grid place-items-center py-16">
-            <Loader2 className="h-7 w-7 animate-spin text-[var(--gold)]" />
+            <Loader2 className="h-7 w-7 animate-spin text-game-gold" />
           </div>
         ) : (
           <>
@@ -107,11 +112,11 @@ export function TribesPage() {
                   <h2>{myTribe.name}</h2>
                   <p>{myTribe.motto || "قبيلة بلا شعار… بعد"}</p>
                   <span className="tribe-rank">
-                    <Shield className="h-3.5 w-3.5" /> رتبتك: {rankLabel[mine!.rank] ?? mine!.rank} · مساهمتك{" "}
-                    {mine!.contribution}
+                    <Shield className="h-3.5 w-3.5" /> رتبتك: {rankLabel[(mine?.rank ?? "member")] ?? (mine?.rank ?? "member")} · مساهمتك{" "}
+                    {mine?.contribution ?? 0}
                   </span>
                 </div>
-                <button
+                <Button variant="ghost"
                   type="button"
                   className="tribe-leave"
                   onClick={async () => {
@@ -121,28 +126,28 @@ export function TribesPage() {
                   }}
                 >
                   <LogOut className="h-4 w-4" /> مغادرة
-                </button>
+                </Button>
               </section>
             ) : (
               <section className="tribe-hero tribe-hero-empty">
-                <Flag className="h-8 w-8 text-[var(--gold)]" />
+                <Flag className="h-8 w-8 text-game-gold" />
                 <div className="tribe-hero-text">
                   <h2>لا قبيلة لك بعد</h2>
                   <p>انضم لقبيلة من القائمة أو أسّس قبيلتك وقُد أسطولك.</p>
                 </div>
-                <button type="button" className="tribe-create" onClick={() => setCreating((v) => !v)} disabled={!player}>
+                <Button variant="ghost" type="button" className="tribe-create" onClick={() => setCreating((v) => !v)} disabled={!player}>
                   <Plus className="h-4 w-4" /> تأسيس قبيلة
-                </button>
+                </Button>
               </section>
             )}
 
             {creating && !myTribe && (
               <section className="tribe-form">
-                <input value={name} onChange={(e) => setName(e.target.value)} maxLength={20} placeholder="اسم القبيلة" />
-                <input value={motto} onChange={(e) => setMotto(e.target.value)} maxLength={80} placeholder="شعار القبيلة" />
+                <input value={name} onChange={(e) => setName(e.target.value)} maxLength={20} aria-label="اسم القبيلة" placeholder="اسم القبيلة" />
+                <input value={motto} onChange={(e) => setMotto(e.target.value)} maxLength={80} aria-label="شعار القبيلة" placeholder="شعار القبيلة" />
                 <div className="tribe-emblems">
                   {EMBLEMS.map((e) => (
-                    <button
+                    <Button variant="ghost"
                       key={e.id}
                       type="button"
                       aria-label={e.id}
@@ -150,13 +155,13 @@ export function TribesPage() {
                       onClick={() => setEmblem(e.id)}
                     >
                       <img src={e.src} alt="" />
-                    </button>
+                    </Button>
                   ))}
                 </div>
                 {error && <p className="auth-error">{error}</p>}
-                <button type="button" className="auth-submit" onClick={doCreate}>
+                <Button variant="ghost" type="button" className="auth-submit" onClick={doCreate}>
                   إنشاء القبيلة
-                </button>
+                </Button>
               </section>
             )}
 
@@ -170,7 +175,7 @@ export function TribesPage() {
                     {TRIBE_QUESTS.map((q) => (
                       <li key={q.id}>
                         <span>{q.label}</span>
-                        <button
+                        <Button variant="ghost"
                           type="button"
                           onClick={async () => {
                             playSfx("click", 0.65);
@@ -179,7 +184,7 @@ export function TribesPage() {
                           }}
                         >
                           +{q.reward}
-                        </button>
+                        </Button>
                       </li>
                     ))}
                   </ul>
@@ -200,7 +205,7 @@ export function TribesPage() {
                           </small>
                         </div>
                         {isLeader && m.rank !== "leader" && (
-                          <button
+                          <Button variant="ghost"
                             type="button"
                             onClick={async () => {
                               playSfx("click", 0.6);
@@ -210,7 +215,7 @@ export function TribesPage() {
                           >
                             <Crown className="h-3.5 w-3.5" />
                             {m.rank === "member" ? "ترقية" : "تخفيض"}
-                          </button>
+                          </Button>
                         )}
                       </li>
                     ))}
@@ -234,7 +239,7 @@ export function TribesPage() {
                     </div>
                     <b>{t.score}</b>
                     {player && !mine && (
-                      <button
+                      <Button variant="ghost"
                         type="button"
                         onClick={async () => {
                           playSfx("click", 0.65);
@@ -243,7 +248,7 @@ export function TribesPage() {
                         }}
                       >
                         انضمام
-                      </button>
+                      </Button>
                     )}
                   </li>
                 ))}

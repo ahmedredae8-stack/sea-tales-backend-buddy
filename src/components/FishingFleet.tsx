@@ -14,6 +14,8 @@ import { CREWS } from "@/lib/items";
 import { cachedLanes, defaultLanes, fetchLanes, type Lane } from "@/lib/fleetLayout";
 import { fmt } from "@/lib/ships";
 import { playSfx } from "@/lib/sound";
+import { useArtworkMap } from "@/lib/artwork";
+import { resolveShipArtwork } from "@/lib/shipArtwork";
 
 type ShipState = "docked" | "sailingOut" | "turning" | "casting" | "fishing" | "hauling" | "sailingHome" | "sold";
 type FleetShip = { id: number; state: ShipState };
@@ -43,6 +45,7 @@ const facingShore: ShipState[] = ["turning", "casting", "fishing", "hauling", "s
 const busyStates: ShipState[] = ["sailingOut", "turning", "casting", "hauling", "sailingHome"];
 
 export function FishingFleet({ themeId, themeName }: { themeId: string; themeName: string }) {
+  const artwork = useArtworkMap();
   const [ships, setShips] = useState(initialFleet);
   const [lanes, setLanes] = useState<Lane[]>(defaultLanes);
   const [assetsReady, setAssetsReady] = useState(false);
@@ -53,7 +56,10 @@ export function FishingFleet({ themeId, themeName }: { themeId: string; themeNam
   const [hullIndex, setHullIndex] = useState(0);
   const [spray, setSpray] = useState(true);
   const [poseOverride, setPoseOverride] = useState<ShipPose | null>(null);
-  const activeHull = hulls[hullIndex] ?? hulls[0]!;
+  const bundledHull = hulls[hullIndex] ?? hulls[0];
+  // Lane IDs identify instances, not catalog products: all starter boats use ship-1.
+  const catalogId = [1, 2, 5, 6, 7, 10][hullIndex] ?? 1;
+  const activeHull = resolveShipArtwork(artwork, catalogId, "idle", bundledHull);
   const timers = useRef<number[]>([]);
 
   useEffect(() => {
@@ -166,14 +172,14 @@ export function FishingFleet({ themeId, themeName }: { themeId: string; themeNam
               <span className={`ship-flip ${facingShore.includes(ship.state) ? "ship-flip-turned" : ""}`} aria-hidden="true">
                 <span className="ship-bob">
                   <img
-                    src={activeHull}
+                    src={resolveShipArtwork(artwork, catalogId, frame, bundledHull)}
                     className="ship-frame ship-frame-active"
                     alt=""
                     width={1024}
                     height={640}
                     draggable={false}
                   />
-                  <ShipNet pose={frame} spray={spray} />
+                  {!artwork[`ship-${catalogId}:${frame}`] && <ShipNet pose={frame} spray={spray} />}
 
                 </span>
               </span>
