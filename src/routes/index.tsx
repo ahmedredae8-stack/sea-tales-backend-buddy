@@ -176,7 +176,7 @@ function Index() {
       </div>
 
       {/* Controls */}
-      <div className="absolute left-3 top-[max(4.5rem,calc(env(safe-area-inset-top)+4.2rem))] z-10 flex flex-col items-center gap-2">
+      <div className="phase-control">
         <button
           type="button"
           className="phase-chip"

@@ -1,4 +1,8 @@
 # Roadmap
+- [ ] Current request: connect studio poses to sea boats with live refresh.
+- [ ] Current request: move day/night indicator below the upper HUD.
+- [ ] Current request: repair and restyle settings, tribe, and messages windows.
+- [ ] Current request: correct Vercel configuration and document required environment values.
 - [x] Make the hidden fleet calibration panel draggable within the sea scene.
 - [x] Rework all seven dock destinations without changing the dock artwork: chat, rankings, inventory, store, alerts, enemies, tribe.
 - [x] Rebalance the captain portrait, gift, and resource display in the top bar.

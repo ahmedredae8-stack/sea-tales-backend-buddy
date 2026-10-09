@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ImagePlus, Rocket, Search, Ship, Trash2, UploadCloud } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { artworkUrl, listArtwork, type ArtworkPose } from "@/lib/artwork";
+import { ARTWORK_UPDATED, artworkUrl, listArtwork, type ArtworkPose } from "@/lib/artwork";
 import { fleetCatalog } from "@/lib/fleetCatalog";
 import { WEAPONS } from "@/lib/items";
 
@@ -59,7 +59,7 @@ export function ArtworkStudio() {
     const old = poseRecord(pose);
     if (old) { await supabase.from("artwork_poses").delete().eq("id", old.id); await supabase.storage.from("game-artwork").remove([old.image_path]); }
     setStatus(`تم نشر وضعية «${poses[category].find(([p]) => p === pose)?.[1]}» لـ ${item.name}`);
-    await refresh(); setBusy(null);
+    await refresh(); window.dispatchEvent(new Event(ARTWORK_UPDATED)); setBusy(null);
   };
 
   const remove = async (row: ArtworkPose) => {
@@ -68,6 +68,7 @@ export function ArtworkStudio() {
     if (error) { setStatus("تعذّر حذف الوضعية"); return; }
     await supabase.storage.from("game-artwork").remove([row.image_path]);
     await refresh();
+    window.dispatchEvent(new Event(ARTWORK_UPDATED));
   };
 
   const switchCat = (c: "ship" | "rocket") => { setCategory(c); setSelected((c === "ship" ? shipItems : rocketItems)[0]!.key); setQuery(""); };
