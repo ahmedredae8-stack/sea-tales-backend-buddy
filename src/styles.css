@@ -2318,6 +2318,25 @@
 .chat-menu-toggle { flex: none; color: var(--gold); }
 .chat-message-list { flex: 1; min-height: 0; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.8rem; }
 .chat-bubble-own, .chat-gold-control { background: var(--gold); color: var(--hud-glass); }
+.win-embed .chat-shell > .dock-empty { min-height: 0 !important; height: 100%; }
+.win-embed .chat-shell > .flex { min-height: 0; height: 100%; }
+.art-studio { color: var(--hud-text); display: grid; gap: 1rem; }
+.art-studio-head { display: flex; gap: 0.8rem; align-items: center; padding-bottom: 1rem; border-bottom: 1px solid var(--gold-deep); }
+.art-studio-head svg, .art-studio h3 { color: var(--gold); }
+.art-studio-head h2 { font-weight: 800; font-size: 1.2rem; }
+.art-mode { display: flex; gap: 0.5rem; }
+.art-mode button { border: 1px solid var(--hud-edge); color: var(--hud-text); }
+.art-mode button.active { border-color: var(--gold); background: var(--hud-surface); }
+.art-label { display: grid; gap: 0.5rem; }
+.art-label input { background: var(--hud-glass); color: var(--hud-text); border: 1px solid var(--hud-edge); border-radius: 5px; padding: 0.6rem; }
+.art-library { display: grid; gap: 0.5rem; }
+.art-record { display: flex; min-width: 0; height: auto; white-space: normal; align-items: center; gap: 0.7rem; border: 1px solid var(--hud-edge); background: var(--hud-surface); border-radius: 5px; padding: 0.6rem; }
+.art-record.active { border-color: var(--gold); }
+.art-record small { display: block; color: var(--hud-subtle); font-size: 0.72rem; }
+.art-record strong { color: var(--hud-text); overflow-wrap: anywhere; }
+.art-record-image { display: grid; place-items: center; width: 4rem; height: 3rem; flex: none; }
+.art-record-image img { width: 100%; height: 100%; object-fit: contain; }
+.art-status { color: var(--gold); }
 .win-embed .chat-room { height: 100%; }
 .win-embed .game-chat .chat-shell { height: 100%; }
 @media (min-width: 900px) {

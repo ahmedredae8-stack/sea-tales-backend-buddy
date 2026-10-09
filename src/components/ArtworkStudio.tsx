@@ -19,7 +19,7 @@ const rocketItems: Item[] = WEAPONS.map(w => ({ key: w.id, name: w.name, info: `
 export function ArtworkStudio() {
   const [category, setCategory] = useState<"ship" | "rocket">("ship");
   const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState<string>(shipItems[0]!.key);
+  const [selected, setSelected] = useState<string>(shipItems[0]?.key ?? "ship-1");
   const [records, setRecords] = useState<ArtworkPose[]>([]);
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [status, setStatus] = useState("");
@@ -29,7 +29,7 @@ export function ArtworkStudio() {
 
   const items = category === "ship" ? shipItems : rocketItems;
   const filtered = useMemo(() => items.filter(i => i.name.includes(query.trim())), [items, query]);
-  const item = items.find(i => i.key === selected) ?? items[0]!;
+  const item = items.find(i => i.key === selected) ?? items[0];
 
   const refresh = async () => {
     try {
@@ -41,14 +41,16 @@ export function ArtworkStudio() {
   };
   useEffect(() => { void refresh(); }, []);
 
-  const poseRecord = (pose: string) => records.find(r => r.subject === item.key && r.pose === pose);
+  const poseRecord = (pose: string) => records.find(r => r.subject === item?.key && r.pose === pose);
 
   const pick = (pose: ArtworkPose["pose"]) => { pendingPose.current = pose; fileRef.current?.click(); };
 
   const upload = async (file: File) => {
+    if (!item) return;
     const pose = pendingPose.current;
     if (file.type !== "image/png" || file.size > 5 * 1024 * 1024) { setStatus("اختر صورة PNG شفافة لا تتجاوز 5 ميجابايت"); return; }
     setBusy(pose); setStatus("");
+    try {
     const { data: auth } = await supabase.auth.getUser();
     if (!auth.user) { setStatus("سجل دخولك أولاً"); setBusy(null); return; }
     const path = `${auth.user.id}/${crypto.randomUUID()}.png`;
@@ -60,6 +62,8 @@ export function ArtworkStudio() {
     if (old) { await supabase.from("artwork_poses").delete().eq("id", old.id); await supabase.storage.from("game-artwork").remove([old.image_path]); }
     setStatus(`تم نشر وضعية «${poses[category].find(([p]) => p === pose)?.[1]}» لـ ${item.name}`);
     await refresh(); window.dispatchEvent(new Event(ARTWORK_UPDATED)); setBusy(null);
+    } catch { setStatus("تعذّر نشر الصورة. تحقق من الاتصال وحاول مرة أخرى."); }
+    finally { setBusy(null); }
   };
 
   const remove = async (row: ArtworkPose) => {
@@ -71,7 +75,9 @@ export function ArtworkStudio() {
     window.dispatchEvent(new Event(ARTWORK_UPDATED));
   };
 
-  const switchCat = (c: "ship" | "rocket") => { setCategory(c); setSelected((c === "ship" ? shipItems : rocketItems)[0]!.key); setQuery(""); };
+  const switchCat = (c: "ship" | "rocket") => { setCategory(c); setSelected((c === "ship" ? shipItems : rocketItems)[0]?.key ?? ""); setQuery(""); };
+
+  if (!item) return <p role="status">لا توجد عناصر متاحة.</p>;
 
   return <section className="art-studio" aria-label="استوديو الإدارة">
     <div className="art-studio-head"><ImagePlus /><div><small>غرفة المشرف</small><h2>استوديو السفن والصواريخ</h2></div></div>
@@ -84,10 +90,10 @@ export function ArtworkStudio() {
       {filtered.map(i => {
         const thumb = records.find(r => r.subject === i.key && r.pose === "idle");
         const count = records.filter(r => r.subject === i.key).length;
-        return <button type="button" key={i.key} className="art-record" onClick={() => setSelected(i.key)} style={{ outline: i.key === item.key ? "2px solid hsl(var(--primary, 45 90% 55%))" : undefined, textAlign: "start" }}>
+        return <Button variant="ghost" type="button" key={i.key} className={`art-record ${i.key === item.key ? "active" : ""}`} onClick={() => setSelected(i.key)} aria-pressed={i.key === item.key}>
           <div className="art-record-image"><img src={(thumb && urls[thumb.id]) || i.fallback} alt="" /></div>
           <div><strong>{i.name}</strong><small>{i.info} · {count}/{poses[category].length} وضعيات</small></div>
-        </button>;
+        </Button>;
       })}
     </div>
     <h3>وضعيات: {item.name}</h3>
