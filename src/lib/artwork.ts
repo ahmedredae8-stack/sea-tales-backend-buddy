@@ -63,7 +63,7 @@ export function useArtworkMap() {
     let alive = true;
     const cached = readCache();
     if (Object.keys(cached).length) setMap(cached);
-    const refresh = async (force = true) => {
+    const refresh = async (force: unknown = true) => {
       try {
         if (!force && inflight) { const m = await inflight; if (alive) setMap(m); return; }
         inflight = fetchMap();
