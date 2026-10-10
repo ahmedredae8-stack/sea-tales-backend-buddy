@@ -4,20 +4,30 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { ARTWORK_UPDATED, artworkUrl, listArtwork, type ArtworkPose } from "@/lib/artwork";
 import { fleetCatalog } from "@/lib/fleetCatalog";
-import { WEAPONS } from "@/lib/items";
+import { ARMORS, CREWS, GEM_PACKS, WEAPONS } from "@/lib/items";
 
 const poses = {
   ship: [["idle", "عادية"], ["cast", "رمي الشباك"], ["submerged", "تحت الماء"], ["haul", "لم الشباك"]],
   rocket: [["idle", "استعداد"], ["flight", "تحليق"], ["explosion", "انفجار"], ["fire", "نيران"], ["smoke", "دخان"], ["fade", "تلاشي"]],
+  crew: [["idle", "صورة المتجر"]],
+  armor: [["idle", "صورة المتجر"]],
+  gem: [["idle", "صورة المتجر"]],
 } as const;
+type Kind = keyof typeof poses;
 
 type Item = { key: string; name: string; info: string; fallback?: string };
 
 const shipItems: Item[] = fleetCatalog.map(s => ({ key: `ship-${s.id}`, name: s.name, info: `${s.price.toLocaleString("ar-EG")} ${s.currency === "coin" ? "عملة" : "جوهرة"}${s.source === "tribe" ? " · قبيلة" : ""}`, fallback: s.hull }));
 const rocketItems: Item[] = WEAPONS.map(w => ({ key: w.id, name: w.name, info: `${w.price.toLocaleString("ar-EG")} ${w.currency === "coin" ? "عملة" : "جوهرة"}`, fallback: w.icon }));
 
+const crewItems: Item[] = CREWS.map(c => ({ key: c.id, name: c.name, info: c.desc, fallback: c.icon }));
+const armorItems: Item[] = ARMORS.map(a => ({ key: a.id, name: a.name, info: a.desc }));
+const gemItems: Item[] = GEM_PACKS.map(g => ({ key: `gem-${g.id}`, name: `${g.gems} جوهرة`, info: String(g.price) }));
+const itemsOf: Record<Kind, Item[]> = { ship: shipItems, rocket: rocketItems, crew: crewItems, armor: armorItems, gem: gemItems };
+const kindLabel: Record<Kind, string> = { ship: "سفن", rocket: "صواريخ", crew: "طواقم", armor: "دروع", gem: "جواهر" };
+
 export function ArtworkStudio() {
-  const [category, setCategory] = useState<"ship" | "rocket">("ship");
+  const [category, setCategory] = useState<Kind>("ship");
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<string>(shipItems[0]?.key ?? "ship-1");
   const [records, setRecords] = useState<ArtworkPose[]>([]);
@@ -27,7 +37,7 @@ export function ArtworkStudio() {
   const fileRef = useRef<HTMLInputElement>(null);
   const pendingPose = useRef<ArtworkPose["pose"]>("idle");
 
-  const items = category === "ship" ? shipItems : rocketItems;
+  const items = itemsOf[category];
   const filtered = useMemo(() => items.filter(i => i.name.includes(query.trim())), [items, query]);
   const item = items.find(i => i.key === selected) ?? items[0];
 
@@ -56,7 +66,7 @@ export function ArtworkStudio() {
     const path = `${auth.user.id}/${crypto.randomUUID()}.png`;
     const { error: upErr } = await supabase.storage.from("game-artwork").upload(path, file, { contentType: "image/png" });
     if (upErr) { setStatus("تعذّر رفع الصورة — تأكد من صلاحية المشرف."); setBusy(null); return; }
-    const { error } = await supabase.from("artwork_poses").insert({ category, subject: item.key, pose, image_path: path, created_by: auth.user.id });
+    const { error } = await supabase.from("artwork_poses").insert({ category: category === "ship" ? "ship" : "rocket", subject: item.key, pose, image_path: path, created_by: auth.user.id });
     if (error) { await supabase.storage.from("game-artwork").remove([path]); setStatus("تعذّر حفظ الوضعية"); setBusy(null); return; }
     const old = poseRecord(pose);
     if (old) { await supabase.from("artwork_poses").delete().eq("id", old.id); await supabase.storage.from("game-artwork").remove([old.image_path]); }
@@ -75,15 +85,14 @@ export function ArtworkStudio() {
     window.dispatchEvent(new Event(ARTWORK_UPDATED));
   };
 
-  const switchCat = (c: "ship" | "rocket") => { setCategory(c); setSelected((c === "ship" ? shipItems : rocketItems)[0]?.key ?? ""); setQuery(""); };
+  const switchCat = (c: Kind) => { setCategory(c); setSelected(itemsOf[c][0]?.key ?? ""); setQuery(""); };
 
   if (!item) return <p role="status">لا توجد عناصر متاحة.</p>;
 
   return <section className="art-studio" aria-label="استوديو الإدارة">
-    <div className="art-studio-head"><ImagePlus /><div><small>غرفة المشرف</small><h2>استوديو السفن والصواريخ</h2></div></div>
+    <div className="art-studio-head"><ImagePlus /><div><small>غرفة المشرف</small><h2>استوديو صور المتجر والسفن</h2></div></div>
     <div className="art-mode" role="group" aria-label="النوع">
-      <Button variant="ghost" className={category === "ship" ? "active" : ""} onClick={() => switchCat("ship")}><Ship /> سفن ({shipItems.length})</Button>
-      <Button variant="ghost" className={category === "rocket" ? "active" : ""} onClick={() => switchCat("rocket")}><Rocket /> صواريخ ({rocketItems.length})</Button>
+      {(Object.keys(itemsOf) as Kind[]).map(k => <Button key={k} variant="ghost" className={category === k ? "active" : ""} onClick={() => switchCat(k)}>{k === "ship" ? <Ship /> : k === "rocket" ? <Rocket /> : <ImagePlus />} {kindLabel[k]} ({itemsOf[k].length})</Button>)}
     </div>
     <label className="art-label"><span style={{ display: "flex", gap: 6, alignItems: "center" }}><Search size={16} /> بحث</span><input value={query} onChange={e => setQuery(e.target.value)} placeholder="ابحث بالاسم" /></label>
     <div className="art-library" style={{ maxHeight: 260, overflowY: "auto" }}>

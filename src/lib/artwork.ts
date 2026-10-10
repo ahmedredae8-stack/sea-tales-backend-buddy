@@ -32,22 +32,44 @@ export async function artworkUrl(path: string) {
 /** Map of "<itemKey>:<pose>" → signed image URL for admin-published art. */
 export const ARTWORK_UPDATED = "island-bay:artwork-updated";
 
+const CACHE_KEY = "bay:artwork-cache";
+let memory: Record<string, string> | null = null;
+let inflight: Promise<Record<string, string>> | null = null;
+
+function readCache(): Record<string, string> {
+  if (memory) return memory;
+  try {
+    const raw = JSON.parse(window.localStorage.getItem(CACHE_KEY) ?? "null") as { at: number; map: Record<string, string> } | null;
+    if (raw && Date.now() - raw.at < 50 * 60_000) return (memory = raw.map);
+  } catch { /* ignore */ }
+  return {};
+}
+
+async function fetchMap(): Promise<Record<string, string>> {
+  const rows = await listArtwork();
+  const newest = new Map<string, ArtworkPose>();
+  for (const row of rows) { const k = `${row.subject}:${row.pose}`; if (!newest.has(k)) newest.set(k, row); }
+  const entries = await Promise.all([...newest].map(async ([k, row]) => [k, await artworkUrl(row.image_path).catch(() => "")] as const));
+  const map = Object.fromEntries(entries.filter(([, u]) => u));
+  memory = map;
+  try { window.localStorage.setItem(CACHE_KEY, JSON.stringify({ at: Date.now(), map })); } catch { /* ignore */ }
+  return map;
+}
+
+/** True once admin art is known (cached or fetched), so views can hold back bundled art. */
 export function useArtworkMap() {
   const [map, setMap] = useState<Record<string, string>>({});
   useEffect(() => {
     let alive = true;
-    const refresh = async () => {
+    const cached = readCache();
+    if (Object.keys(cached).length) setMap(cached);
+    const refresh = async (force = true) => {
       try {
-        const rows = await listArtwork();
-        const entries: [string, string][] = [];
-        for (const row of rows) {
-          const key = `${row.subject}:${row.pose}`;
-          if (entries.some(([k]) => k === key)) continue; // newest wins
-          const url = await artworkUrl(row.image_path).catch(() => "");
-          if (url) entries.push([key, url]);
-        }
-        if (alive) setMap(Object.fromEntries(entries));
-      } catch { /* fall back to bundled art */ }
+        if (!force && inflight) { const m = await inflight; if (alive) setMap(m); return; }
+        inflight = fetchMap();
+        const m = await inflight;
+        if (alive) setMap(m);
+      } catch { /* fall back to bundled art */ } finally { inflight = null; }
     };
     void refresh();
     window.addEventListener(ARTWORK_UPDATED, refresh);
