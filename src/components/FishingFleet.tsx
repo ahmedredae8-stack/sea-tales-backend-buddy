@@ -15,6 +15,8 @@ import { cachedLanes, defaultLanes, fetchLanes, type Lane } from "@/lib/fleetLay
 import { fmt } from "@/lib/ships";
 import { playSfx } from "@/lib/sound";
 import { useArtworkMap } from "@/lib/artwork";
+import { landCatch, type CatchLine } from "@/lib/harbor";
+import { fleetCatalog } from "@/lib/fleetCatalog";
 import { resolveShipArtwork } from "@/lib/shipArtwork";
 
 type ShipState = "docked" | "sailingOut" | "turning" | "casting" | "fishing" | "hauling" | "sailingHome" | "sold";
@@ -61,6 +63,8 @@ export function FishingFleet({ themeId, themeName }: { themeId: string; themeNam
   const catalogId = [1, 2, 5, 6, 7, 10][hullIndex] ?? 1;
   const activeHull = resolveShipArtwork(artwork, catalogId, "idle", bundledHull);
   const timers = useRef<number[]>([]);
+  const [haulResult, setHaulResult] = useState<CatchLine[] | null>(null);
+  const tripMs = (fleetCatalog.find((s) => s.id === catalogId)?.tripSeconds ?? 30) * 1000;
 
   useEffect(() => {
     let active = true;
@@ -95,23 +99,25 @@ export function FishingFleet({ themeId, themeName }: { themeId: string; themeNam
     if (ship.state === "docked") {
       if (reducedMotion) {
         update(ship.id, "fishing");
+        later(() => haul(ship.id), tripMs);
         return;
       }
       update(ship.id, "sailingOut");
       later(() => update(ship.id, "turning"), 2300);
       later(() => update(ship.id, "casting"), 3150);
       later(() => update(ship.id, "fishing"), 4600);
+      later(() => haul(ship.id), 4600 + tripMs);
       return;
     }
-    if (ship.state === "fishing") {
-      if (reducedMotion) {
-        update(ship.id, "docked");
-        return;
-      }
-      update(ship.id, "hauling");
-      later(() => update(ship.id, "sailingHome"), 1500);
-      later(() => update(ship.id, "docked"), 3900);
-    }
+  };
+
+  /** Bring the net up once the trip time is over, then show what was caught. */
+  const haul = (id: number) => {
+    const done = () => { update(id, "docked"); setHaulResult(landCatch(catalogId)); playSfx("click", 0.8); };
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { done(); return; }
+    update(id, "hauling");
+    later(() => update(id, "sailingHome"), 1500);
+    later(done, 3900);
   };
 
   /** Owner tool preview: send every docked ship out on its new lane. */
@@ -204,6 +210,19 @@ export function FishingFleet({ themeId, themeName }: { themeId: string; themeNam
         onPoseChange={setPoseOverride}
       />
 
+      {haulResult && (
+        <div className="fleet-modal" role="dialog" aria-modal="true" aria-label="نتيجة الصيد" onClick={() => setHaulResult(null)}>
+          <section className="haul-panel" dir="rtl" onClick={(event) => event.stopPropagation()}>
+            <h2>نتيجة الصيد</h2>
+            <div className="haul-board">
+              {haulResult.map((line) => (
+                <p key={line.fish.id} className="haul-line"><img src={line.fish.img} alt="" /><span>{line.fish.name}</span><b>X{line.qty.toLocaleString("en-US")}</b></p>
+              ))}
+            </div>
+            <Button className="haul-ok" onClick={() => setHaulResult(null)}>OK</Button>
+          </section>
+        </div>
+      )}
       {crewFor !== null && <CrewPanel shipId={crewFor} onClose={() => setCrewFor(null)} />}
       {sellFor !== null && (
         <div className="fleet-modal" role="dialog" aria-modal="true" aria-label="بيع السفينة" onClick={() => setSellFor(null)}>
