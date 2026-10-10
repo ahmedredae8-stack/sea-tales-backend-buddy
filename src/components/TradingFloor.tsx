@@ -1,259 +1,119 @@
 import { useEffect, useMemo, useState } from "react";
 
-import {
-  ASSETS,
-  FISH_ASSETS,
-  SHIP_ASSETS,
-  book,
-  candles,
-  change,
-  fmtCoins,
-  loadLedger,
-  saveLedger,
-  spot,
-  type Asset,
-  type AssetKind,
-  type Ledger,
-  type Side,
-} from "@/lib/market";
+import { fleetCatalog, tripLabel } from "@/lib/fleetCatalog";
+import { FISH, HARBOR_UPDATED, HOURS, buyShip, ownedShips, priceSeries, sellFish } from "@/lib/harbor";
+import { fmtCoins, loadLedger, type AssetKind, type Ledger } from "@/lib/market";
+import { useArtworkMap } from "@/lib/artwork";
+import { resolveShipArtwork } from "@/lib/shipArtwork";
 import { playSfx } from "@/lib/sound";
 
-/**
- * The trading floor: a live-feeling exchange for fish and ships.
- * Purely image driven — every row leads with the asset artwork, no icon fonts.
- */
+const COIN = "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/906f37c0-d530-4e50-a3ce-00deaaf40a02/coin.png";
+const GEM = "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/81b9318d-8399-478f-bd28-abec7665a1a6/gem.png";
+
+function useHarbor() {
+  const [ledger, setLedger] = useState<Ledger>({ coins: 0, holdings: {}, orders: [] });
+  const [owned, setOwned] = useState<number[]>([1]);
+  useEffect(() => {
+    const sync = () => { setLedger(loadLedger()); setOwned(ownedShips()); };
+    sync();
+    window.addEventListener(HARBOR_UPDATED, sync);
+    return () => window.removeEventListener(HARBOR_UPDATED, sync);
+  }, []);
+  return { ledger, owned };
+}
+
 export function TradingFloor({ start = "fish" }: { start?: AssetKind }) {
   const [kind, setKind] = useState<AssetKind>(start);
-  const list = kind === "fish" ? FISH_ASSETS : SHIP_ASSETS;
-  const [assetId, setAssetId] = useState(list[0]!.id);
-  const [qty, setQty] = useState(1);
-  const [tick, setTick] = useState(0);
-  const [ledger, setLedger] = useState<Ledger>(() => loadLedger());
-  const [flash, setFlash] = useState<string | null>(null);
-
-  useEffect(() => setLedger(loadLedger()), []);
-  useEffect(() => {
-    const t = window.setInterval(() => setTick((n) => n + 1), 6000);
-    return () => window.clearInterval(t);
-  }, []);
-  useEffect(() => {
-    if (!list.some((a) => a.id === assetId)) setAssetId(list[0]!.id);
-  }, [kind, list, assetId]);
-
-  const asset: Asset = useMemo(
-    () => ASSETS.find((a) => a.id === assetId) ?? list[0]!,
-    [assetId, list],
+  const { ledger, owned } = useHarbor();
+  return (
+    <div dir="rtl" className="mk">
+      <header className="mk-top">
+        <div className="mk-tabs">
+          <button type="button" className={kind === "fish" ? "is-on" : ""} onClick={() => { playSfx("click", 0.5); setKind("fish"); }}>سوق السمك</button>
+          <button type="button" className={kind === "ship" ? "is-on" : ""} onClick={() => { playSfx("click", 0.5); setKind("ship"); }}>سوق السفن</button>
+        </div>
+        <span className="mk-wallet"><img src={COIN} alt="" /><b>{fmtCoins(ledger.coins)}</b></span>
+      </header>
+      {kind === "fish" ? <FishDesk ledger={ledger} /> : <ShipDesk ledger={ledger} owned={owned} />}
+    </div>
   );
+}
 
-  const price = useMemo(() => spot(asset), [asset, tick]);
-  const move = useMemo(() => change(asset), [asset, tick]);
-  const bars = useMemo(() => candles(asset, 40), [asset, tick]);
-  const depth = useMemo(() => book(asset), [asset, tick]);
-  const owned = ledger.holdings[asset.id] ?? 0;
-  const total = price * qty;
+function FishDesk({ ledger }: { ledger: Ledger }) {
+  const inHold = FISH.filter((f) => (ledger.holdings[f.id] ?? 0) > 0);
+  const [id, setId] = useState<string>("");
+  const fish = inHold.find((f) => f.id === id) ?? inHold[0];
+  const have = fish ? ledger.holdings[fish.id] ?? 0 : 0;
+  const [qty, setQty] = useState(0);
+  const [msg, setMsg] = useState("");
+  useEffect(() => setQty(have), [fish?.id, have]);
+  const series = useMemo(() => (fish ? priceSeries(fish) : []), [fish]);
 
-  const hi = Math.max(...bars.map((b) => b.h));
-  const lo = Math.min(...bars.map((b) => b.l));
-  const span = Math.max(1e-6, hi - lo);
-  const y = (v: number) => 100 - ((v - lo) / span) * 100;
+  if (!fish) return <p className="mk-empty">مخزنك فارغ — أرسل سفنك للصيد ثم عد لبيع ما اصطدته.</p>;
 
-  const trade = (side: Side) => {
-    playSfx("click", 0.7);
-    setLedger((prev) => {
-      const next: Ledger = {
-        coins: prev.coins,
-        holdings: { ...prev.holdings },
-        orders: [...prev.orders],
-      };
-      const have = next.holdings[asset.id] ?? 0;
-      if (side === "buy") {
-        if (next.coins < total) {
-          setFlash("لا تكفي العملات لإتمام الصفقة");
-          return prev;
-        }
-        next.coins -= total;
-        next.holdings[asset.id] = have + qty;
-        setFlash(`تم شراء ${qty} × ${asset.name}`);
-      } else {
-        if (have < qty) {
-          setFlash("لا تملك كمية كافية للبيع");
-          return prev;
-        }
-        next.coins += total;
-        next.holdings[asset.id] = have - qty;
-        setFlash(`تم بيع ${qty} × ${asset.name}`);
-      }
-      next.orders = [
-        { id: `${Date.now()}`, assetId: asset.id, side, qty, price, at: Date.now() },
-        ...next.orders,
-      ].slice(0, 12);
-      saveLedger(next);
-      return next;
-    });
-  };
-
-  useEffect(() => {
-    if (!flash) return;
-    const t = window.setTimeout(() => setFlash(null), 2200);
-    return () => window.clearTimeout(t);
-  }, [flash]);
+  const price = series[series.length - 1]!;
+  const hi = Math.max(...series) * 1.1, lo = Math.min(...series) * 0.9;
+  const pt = (v: number, i: number) => `${10 + i * (180 / (series.length - 1))},${90 - ((v - lo) / (hi - lo)) * 80}`;
+  const ticks = [0, 1, 2, 3, 4].map((i) => lo + ((hi - lo) * i) / 4);
 
   return (
-    <div dir="rtl" className="tf">
-      <header className="tf-top">
-        <div className="tf-tabs">
-          <button
-            type="button"
-            className={`tf-tab ${kind === "fish" ? "is-on" : ""}`}
-            onClick={() => {
-              playSfx("click", 0.5);
-              setKind("fish");
-            }}
-          >
-            <img src="https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/8375eb41-2ea8-4351-8b7a-448d60539f87/pin-fish.png" alt="" />
-            سوق السمك
+    <div className="mk-fish">
+      <div className="mk-catch-row">
+        {inHold.map((f) => (
+          <button key={f.id} type="button" className={f.id === fish.id ? "is-on" : ""} onClick={() => { playSfx("click", 0.45); setId(f.id); }}>
+            <img src={f.img} alt="" /><span>{f.name}</span><small>x{fmtCoins(ledger.holdings[f.id] ?? 0)}</small>
           </button>
-          <button
-            type="button"
-            className={`tf-tab ${kind === "ship" ? "is-on" : ""}`}
-            onClick={() => {
-              playSfx("click", 0.5);
-              setKind("ship");
-            }}
-          >
-            <img src="https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/fb9b0fc1-ea0d-4c43-a889-ee8820a084f2/pin-ship.png" alt="" />
-            سوق السفن
-          </button>
-        </div>
-        <div className="tf-wallet">
-          <img src="https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/906f37c0-d530-4e50-a3ce-00deaaf40a02/coin.png" alt="" />
-          <b>{fmtCoins(ledger.coins)}</b>
-        </div>
-      </header>
-
-      <div className="tf-grid">
-        <aside className="tf-list">
-          {list.map((a) => {
-            const p = spot(a);
-            const ch = change(a);
-            return (
-              <button
-                key={a.id}
-                type="button"
-                className={`tf-row ${a.id === asset.id ? "is-on" : ""}`}
-                onClick={() => {
-                  playSfx("click", 0.45);
-                  setAssetId(a.id);
-                }}
-              >
-                <img src={a.img} alt="" className="tf-row-img" />
-                <span className="tf-row-name">
-                  <b>{a.name}</b>
-                  <i>{a.tag}</i>
-                </span>
-                <span className="tf-row-price">
-                  <b>{fmtCoins(p)}</b>
-                  <i className={ch >= 0 ? "up" : "dn"}>
-                    {ch >= 0 ? "▲" : "▼"} {Math.abs(ch).toFixed(2)}%
-                  </i>
-                </span>
-              </button>
-            );
-          })}
-        </aside>
-
-        <section className="tf-main">
-          <div className="tf-head">
-            <img src={asset.img} alt="" className="tf-hero" />
-            <div className="tf-head-text">
-              <h3>{asset.name}</h3>
-              <p>
-                المعروض {fmtCoins(asset.supply)} · بحوزتك {owned}
-              </p>
-            </div>
-            <div className="tf-price">
-              <b>{fmtCoins(price)}</b>
-              <i className={move >= 0 ? "up" : "dn"}>
-                {move >= 0 ? "▲" : "▼"} {Math.abs(move).toFixed(2)}%
-              </i>
-            </div>
-          </div>
-
-          <svg className="tf-chart" viewBox="0 0 200 100" preserveAspectRatio="none" aria-hidden>
-            {bars.map((b, i) => {
-              const x = (i + 0.5) * (200 / bars.length);
-              const w = Math.max(1.6, 200 / bars.length - 1.6);
-              const up = b.c >= b.o;
-              const top = y(Math.max(b.o, b.c));
-              const h = Math.max(0.8, Math.abs(y(b.o) - y(b.c)));
-              return (
-                <g key={i} className={up ? "cd-up" : "cd-dn"}>
-                  <line x1={x} x2={x} y1={y(b.h)} y2={y(b.l)} />
-                  <rect x={x - w / 2} y={top} width={w} height={h} />
-                </g>
-              );
-            })}
-          </svg>
-
-          <div className="tf-book">
-            <div className="tf-book-col">
-              <h4>طلبات الشراء</h4>
-              {depth.bids.map((r, i) => (
-                <p key={i}>
-                  <span className="up">{fmtCoins(r.price)}</span>
-                  <span>{r.qty}</span>
-                </p>
-              ))}
-            </div>
-            <div className="tf-book-col">
-              <h4>عروض البيع</h4>
-              {depth.asks.map((r, i) => (
-                <p key={i}>
-                  <span className="dn">{fmtCoins(r.price)}</span>
-                  <span>{r.qty}</span>
-                </p>
-              ))}
-            </div>
-          </div>
-
-          <footer className="tf-ticket">
-            <div className="tf-qty">
-              <button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))}>
-                −
-              </button>
-              <b>{qty}</b>
-              <button type="button" onClick={() => setQty((q) => Math.min(99, q + 1))}>
-                +
-              </button>
-            </div>
-            <span className="tf-total">
-              الإجمالي <b>{fmtCoins(total)}</b>
-            </span>
-            <button type="button" className="tf-buy" onClick={() => trade("buy")}>
-              شراء
-            </button>
-            <button type="button" className="tf-sell" onClick={() => trade("sell")}>
-              بيع
-            </button>
-          </footer>
-
-          {flash && <p className="tf-flash">{flash}</p>}
-
-          {ledger.orders.length > 0 && (
-            <div className="tf-log">
-              {ledger.orders.slice(0, 5).map((o) => (
-                <p key={o.id}>
-                  <span className={o.side === "buy" ? "up" : "dn"}>
-                    {o.side === "buy" ? "شراء" : "بيع"}
-                  </span>
-                  {ASSETS.find((a) => a.id === o.assetId)?.name} × {o.qty} —{" "}
-                  {fmtCoins(o.price * o.qty)}
-                </p>
-              ))}
-            </div>
-          )}
-        </section>
+        ))}
       </div>
+      <div className="mk-quality">الجودة: 100%</div>
+      <div className="mk-paper">
+        <svg viewBox="0 0 200 110" aria-label={`سعر ${fish.name} خلال الساعات الماضية`}>
+          {ticks.map((t) => <text key={t} x="0" y={92 - ((t - lo) / (hi - lo)) * 80} className="mk-axis">{t.toFixed(1)}$</text>)}
+          <polyline points={series.map(pt).join(" ")} />
+          <circle cx={pt(price, series.length - 1).split(",")[0]} cy={pt(price, series.length - 1).split(",")[1]} r="2.4" />
+          {HOURS.map((h, i) => <text key={h} x={10 + i * (180 / (HOURS.length - 1))} y="106" className="mk-axis" textAnchor="middle">{h}</text>)}
+        </svg>
+      </div>
+      <p className="mk-price">السعر الحالي: <b>{price}</b></p>
+      <label className="mk-slider">
+        <span>{fmtCoins(qty)}/{fmtCoins(have)}</span>
+        <input type="range" min={1} max={have} value={qty} onChange={(e) => setQty(Number(e.target.value))} />
+        <span className="mk-earn"><img src={COIN} alt="" />{fmtCoins(Math.round(qty * price))}</span>
+      </label>
+      <button type="button" className="mk-sell" onClick={() => {
+        const r = sellFish(fish, qty, price);
+        playSfx("click", 0.8);
+        setMsg(typeof r === "string" ? r : `تم بيع ${fmtCoins(qty)} ${fish.name}`);
+      }}>بيع</button>
+      {msg && <p className="mk-flash" role="status">{msg}</p>}
+    </div>
+  );
+}
+
+function ShipDesk({ ledger, owned }: { ledger: Ledger; owned: number[] }) {
+  const art = useArtworkMap();
+  const [msg, setMsg] = useState("");
+  const mine = fleetCatalog.filter((s) => owned.includes(s.id));
+  const forSale = fleetCatalog.filter((s) => !owned.includes(s.id));
+  const card = (s: (typeof fleetCatalog)[number], isMine: boolean) => (
+    <li key={s.id} className={`mk-ship ${isMine ? "is-mine" : ""}`}>
+      <img src={resolveShipArtwork(art, s.id, "idle", s.hull)} alt="" loading="lazy" />
+      <strong>{s.name}</strong>
+      <small>{s.fish.join(" · ")} · {tripLabel(s.tripSeconds)}</small>
+      {isMine ? <span className="mk-owned">في أسطولك</span> : (
+        <button type="button" disabled={s.currency === "coin" && ledger.coins < s.price} onClick={() => { playSfx("click", 0.7); const e = buyShip(s); setMsg(e ?? `انضمت ${s.name} إلى أسطولك`); }}>
+          <img src={s.currency === "coin" ? COIN : GEM} alt="" />{fmtCoins(s.price)}
+        </button>
+      )}
+    </li>
+  );
+  return (
+    <div className="mk-ships">
+      {msg && <p className="mk-flash" role="status">{msg}</p>}
+      <h3>سفني ({mine.length})</h3>
+      <ul>{mine.map((s) => card(s, true))}</ul>
+      <h3>للشراء ({forSale.length})</h3>
+      <ul>{forSale.map((s) => card(s, false))}</ul>
     </div>
   );
 }
