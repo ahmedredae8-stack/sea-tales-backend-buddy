@@ -44,8 +44,8 @@ export function GameStore({ activeId, onSelect, onClose }: { activeId: string; o
   const art = useArtworkMap();
   const products = useMemo<Product[]>(() => {
     if (tab === "weapons") return WEAPONS.map((item, index) => ({ id: item.id, title: item.name, desc: `${item.desc} · قوة تدميرية ${item.power * 1000}`, price: item.price, currency: item.currency, art: art[`${item.id}:idle`] ? <img src={art[`${item.id}:idle`]} alt="" loading="lazy" /> : <GameSprite atlas="weapon" index={index} /> }));
-    if (tab === "crew") return CREWS.map((item, index) => ({ id: item.id, title: item.name, desc: `${item.desc} · ${item.hours}H`, price: item.price, currency: item.currency, art: <GameSprite atlas="crew" index={index} /> }));
-    if (tab === "armor") return ARMORS.map((item, index) => ({ id: item.id, title: item.name, desc: `${item.desc} · دفاع ${item.defense * 500}`, price: item.price, currency: item.currency, art: <GameSprite atlas="armor" index={index} /> }));
+    if (tab === "crew") return CREWS.map((item, index) => ({ id: item.id, title: item.name, desc: `${item.desc} · ${item.hours}H`, price: item.price, currency: item.currency, art: art[`${item.id}:idle`] ? <img src={art[`${item.id}:idle`]} alt="" loading="lazy" /> : <GameSprite atlas="crew" index={index} /> }));
+    if (tab === "armor") return ARMORS.map((item, index) => ({ id: item.id, title: item.name, desc: `${item.desc} · دفاع ${item.defense * 500}`, price: item.price, currency: item.currency, art: art[`${item.id}:idle`] ? <img src={art[`${item.id}:idle`]} alt="" loading="lazy" /> : <GameSprite atlas="armor" index={index} /> }));
     if (tab === "ships")
       return fleetCatalog.map((ship) => ({
         id: `ship-${ship.id}`,
@@ -94,7 +94,7 @@ export function GameStore({ activeId, onSelect, onClose }: { activeId: string; o
               </ul>
             </>
           )}
-          {tab === "gems" && <GemPacks />}
+          {tab === "gems" && <GemPacks art={art} />}
           {products.length > 0 && <ProductPicker key={tab} items={products} />}
         </div>
       </section>
@@ -102,12 +102,12 @@ export function GameStore({ activeId, onSelect, onClose }: { activeId: string; o
   );
 }
 
-function GemPacks() {
+function GemPacks({ art }: { art: Record<string, string> }) {
   return (
     <ul className="store-grid gem-grid">
       {GEM_PACKS.map((pack, index) => (
         <li key={pack.id} className="store-product gem-card">
-          <span className="product-art"><GameSprite atlas="gem" index={index} /></span>
+          <span className="product-art">{art[`gem-${pack.id}:idle`] ? <img src={art[`gem-${pack.id}:idle`]} alt="" /> : <GameSprite atlas="gem" index={index} />}</span>
           <span className="product-copy">
             <strong>{fmt(pack.gems)} جوهرة</strong>
             <small>{pack.bonus > 0 ? `+${fmt(pack.bonus)} مكافأة · ` : ""}VIP +{pack.vip}</small>
@@ -133,6 +133,7 @@ function ProductPicker({ items }: { items: Product[] }) {
             <Button variant="ghost" onClick={() => { setPickedId(item.id); setQty(1); playSfx("click", 0.5); }} className={item.id === picked.id ? "store-product item-card selected" : "store-product item-card"}>
               <span className="product-art">{item.art}</span>
               <span className="product-copy"><strong>{item.title}</strong><small>{item.desc}</small></span>
+              <span className="product-price">{item.price === 0 ? "مجاني" : fmt(item.price)} {item.currency === "coin" ? "🪙" : "💎"}</span>
             </Button>
           </li>
         ))}
