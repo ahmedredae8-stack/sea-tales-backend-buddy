@@ -105,3 +105,23 @@ export function sellFish(fish: Fish, qty: number, price: number): Ledger | strin
   notify();
   return next;
 }
+
+/** Gear bought in the store, keyed by product id → quantity. */
+const GEAR_KEY = "bay:gear";
+export function ownedGear(): Record<string, number> {
+  if (typeof window === "undefined") return {};
+  try { return JSON.parse(window.localStorage.getItem(GEAR_KEY) ?? "{}") as Record<string, number>; } catch { return {}; }
+}
+
+export function buyGear(id: string, price: number, currency: "coin" | "gem", qty: number): string | null {
+  if (currency !== "coin") return "الشراء بالجواهر غير متاح حالياً";
+  const total = price * qty;
+  const ledger = loadLedger();
+  if (ledger.coins < total) return "لا تكفي العملات";
+  saveLedger({ ...ledger, coins: ledger.coins - total });
+  const gear = ownedGear();
+  gear[id] = (gear[id] ?? 0) + qty;
+  window.localStorage.setItem(GEAR_KEY, JSON.stringify(gear));
+  notify();
+  return null;
+}
