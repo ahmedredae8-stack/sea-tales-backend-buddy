@@ -3,7 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { fleetCatalog, tripLabel } from "@/lib/fleetCatalog";
 import { FISH, HARBOR_UPDATED, HOURS, buyShip, ownedShips, priceSeries, sellFish } from "@/lib/harbor";
 import { fmtCoins, loadLedger, type AssetKind, type Ledger } from "@/lib/market";
-import { useArtworkMap } from "@/lib/artwork";
+import { useArtwork } from "@/lib/artwork";
+import marketBg from "@/assets/ui/fish-market-bg.jpg";
 import { resolveShipArtwork } from "@/lib/shipArtwork";
 import { playSfx } from "@/lib/sound";
 
@@ -26,7 +27,7 @@ export function TradingFloor({ start = "fish" }: { start?: AssetKind }) {
   const [kind, setKind] = useState<AssetKind>(start);
   const { ledger, owned } = useHarbor();
   return (
-    <div dir="rtl" className="mk">
+    <div dir="rtl" className={`mk mk-${kind}`} style={kind === "fish" ? { backgroundImage: `url(${marketBg})` } : undefined}>
       <header className="mk-top">
         <div className="mk-tabs">
           <button type="button" className={kind === "fish" ? "is-on" : ""} onClick={() => { playSfx("click", 0.5); setKind("fish"); }}>سوق السمك</button>
@@ -91,15 +92,19 @@ function FishDesk({ ledger }: { ledger: Ledger }) {
 }
 
 function ShipDesk({ ledger, owned }: { ledger: Ledger; owned: number[] }) {
-  const art = useArtworkMap();
+  const { map: art, ready } = useArtwork();
   const [msg, setMsg] = useState("");
   const mine = fleetCatalog.filter((s) => owned.includes(s.id));
   const forSale = fleetCatalog.filter((s) => !owned.includes(s.id));
   const card = (s: (typeof fleetCatalog)[number], isMine: boolean) => (
     <li key={s.id} className={`mk-ship ${isMine ? "is-mine" : ""}`}>
-      <img src={resolveShipArtwork(art, s.id, "idle", s.hull)} alt="" loading="lazy" />
+      {ready || art[`ship-${s.id}:idle`] ? <img src={resolveShipArtwork(art, s.id, "idle", s.hull)} alt="" loading="lazy" /> : <span className="product-art-wait" aria-hidden="true" />}
       <strong>{s.name}</strong>
-      <small>{s.fish.join(" · ")} · {tripLabel(s.tripSeconds)}</small>
+      <dl className="mk-ship-specs">
+        <div><dt>مدة الصيد</dt><dd>{tripLabel(s.tripSeconds)}</dd></div>
+        <div><dt>نوع الصيد</dt><dd>{s.fish.join(" · ")}</dd></div>
+        {s.source === "tribe" && <div><dt>المصدر</dt><dd>القبيلة</dd></div>}
+      </dl>
       {isMine ? <span className="mk-owned">في أسطولك</span> : (
         <button type="button" disabled={s.currency === "coin" && ledger.coins < s.price} onClick={() => { playSfx("click", 0.7); const e = buyShip(s); setMsg(e ?? `انضمت ${s.name} إلى أسطولك`); }}>
           <img src={s.currency === "coin" ? COIN : GEM} alt="" />{fmtCoins(s.price)}
