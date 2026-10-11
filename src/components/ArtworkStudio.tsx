@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ImagePlus, Rocket, Search, Ship, Trash2, UploadCloud } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { ARTWORK_UPDATED, artworkUrl, listArtwork, type ArtworkPose } from "@/lib/artwork";
+import { ARTWORK_UPDATED, artworkUrl, exportArtwork, listArtwork, type ArtworkPose } from "@/lib/artwork";
 import { fleetCatalog } from "@/lib/fleetCatalog";
 import { ARMORS, CREWS, GEM_PACKS, WEAPONS } from "@/lib/items";
 
@@ -85,12 +85,26 @@ export function ArtworkStudio() {
     window.dispatchEvent(new Event(ARTWORK_UPDATED));
   };
 
+  const doExport = async () => {
+    setStatus("جارٍ تجهيز التصدير…");
+    try {
+      const data = await exportArtwork();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `sea-tales-artwork-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      setStatus(`تم تصدير ${data.count} صورة — أرسل الملف لاعتماده كأساس دائم`);
+    } catch { setStatus("تعذّر التصدير"); }
+  };
+
   const switchCat = (c: Kind) => { setCategory(c); setSelected(itemsOf[c][0]?.key ?? ""); setQuery(""); };
 
   if (!item) return <p role="status">لا توجد عناصر متاحة.</p>;
 
   return <section className="art-studio" aria-label="استوديو الإدارة">
-    <div className="art-studio-head"><ImagePlus /><div><small>غرفة المشرف</small><h2>استوديو صور المتجر والسفن</h2></div></div>
+    <div className="art-studio-head"><ImagePlus /><div><small>غرفة المشرف</small><h2>استوديو صور المتجر والسفن</h2></div><Button className="ms-auto" onClick={() => void doExport()}>تصدير كامل</Button></div>
     <div className="art-mode" role="group" aria-label="النوع">
       {(Object.keys(itemsOf) as Kind[]).map(k => <Button key={k} variant="ghost" className={category === k ? "active" : ""} onClick={() => switchCat(k)}>{k === "ship" ? <Ship /> : k === "rocket" ? <Rocket /> : <ImagePlus />} {kindLabel[k]} ({itemsOf[k].length})</Button>)}
     </div>
