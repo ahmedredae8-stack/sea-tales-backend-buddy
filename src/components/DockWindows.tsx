@@ -47,7 +47,7 @@ export function InventoryWindow({ player }: { player: Player | null }) {
   const mine = pool.filter((g) => (gear[g.id] ?? 0) > 0);
   return <div className="dock-content">
     <nav className="dock-tabs" aria-label="أقسام المخزن">{categories.map((item) => <Button key={item} variant="ghost" className={category === item ? "dock-tab active" : "dock-tab"} onClick={() => setCategory(item)}>{item}</Button>)}</nav>
-    {category === "خلفيات" && player ? <div className="inventory-world"><img src={theme.day.poster} alt="" /><div><strong>{theme.name}</strong><span>الخلفية الحالية</span></div></div> : category !== "خلفيات" && mine.length ? <ul className="gear-grid">{mine.map((g) => <li key={g.id} className="gear-card"><span className="gear-art">{art[`${g.id}:idle`] ? <img src={art[`${g.id}:idle`]} alt="" /> : <GameSprite atlas={g.atlas} index={g.i} />}</span><strong>{g.name}</strong><b>x{gear[g.id]}</b></li>)}</ul> : <EmptyState icon={Shield} title={`لا توجد ${category} في مخزنك` : "سجل دخولك لعرض مخزنك"} detail="اشترِ العتاد من المتجر وسيظهر هنا فوراً." />}
+    {category === "خلفيات" && player ? <div className="inventory-world"><img src={theme.day.poster} alt="" /><div><strong>{theme.name}</strong><span>الخلفية الحالية</span></div></div> : category !== "خلفيات" && mine.length ? <ul className="gear-grid">{mine.map((g) => <li key={g.id} className="gear-card"><span className="gear-art">{art[`${g.id}:idle`] ? <img src={art[`${g.id}:idle`]} alt="" /> : <GameSprite atlas={g.atlas} index={g.i} />}</span><strong>{g.name}</strong><b>x{gear[g.id]}</b></li>)}</ul> : <EmptyState icon={Shield} title={`لا توجد ${category} في مخزنك`} detail="اشترِ العتاد من المتجر وسيظهر هنا فوراً." />}
   </div>;
 }
 
