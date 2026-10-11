@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ARTWORK_BASELINE } from "@/lib/artworkBaseline";
 
 export type ArtworkPose = {
   id: string;
@@ -58,7 +59,14 @@ async function fetchMap(): Promise<Record<string, string>> {
 
 /** True once admin art is known (cached or fetched), so views can hold back bundled art. */
 export function useArtworkMap() {
-  const [map, setMap] = useState<Record<string, string>>({});
+  return useArtwork().map;
+}
+
+/** Admin art plus a ready flag; views hold back bundled art until ready so old images never flash. */
+export function useArtwork() {
+  const [map, setMapRaw] = useState<Record<string, string>>(ARTWORK_BASELINE);
+  const [ready, setReady] = useState(false);
+  const setMap = (m: Record<string, string>) => { setMapRaw({ ...ARTWORK_BASELINE, ...m }); setReady(true); };
   useEffect(() => {
     let alive = true;
     const cached = readCache();
@@ -69,7 +77,7 @@ export function useArtworkMap() {
         inflight = fetchMap();
         const m = await inflight;
         if (alive) setMap(m);
-      } catch { /* fall back to bundled art */ } finally { inflight = null; }
+      } catch { if (alive) setReady(true); } finally { inflight = null; }
     };
     void refresh();
     window.addEventListener(ARTWORK_UPDATED, refresh);
@@ -82,5 +90,18 @@ export function useArtworkMap() {
       window.clearInterval(timer);
     };
   }, []);
-  return map;
+  return { map, ready };
+}
+
+/** Full export: newest pose per item with long-lived URLs, ready to paste into the baseline. */
+export async function exportArtwork() {
+  const rows = await listArtwork();
+  const newest = new Map<string, ArtworkPose>();
+  for (const row of rows) { const k = `${row.subject}:${row.pose}`; if (!newest.has(k)) newest.set(k, row); }
+  const out: Record<string, { path: string; url: string }> = {};
+  for (const [k, row] of newest) {
+    const { data } = await supabase.storage.from("game-artwork").createSignedUrl(row.image_path, 60 * 60 * 24 * 365 * 5);
+    if (data?.signedUrl) out[k] = { path: row.image_path, url: data.signedUrl };
+  }
+  return { exported_at: new Date().toISOString(), count: Object.keys(out).length, artwork: out };
 }

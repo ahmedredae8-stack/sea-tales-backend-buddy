@@ -18,8 +18,8 @@ import { usePlayer } from "@/hooks/usePlayer";
 import { useStageScale } from "@/hooks/useStageScale";
 import { saveThemeToAccount } from "@/lib/player";
 import { isMuted, playAmbient, playSfx, setMuted, stopAllSounds } from "@/lib/sound";
-import { FishMarket } from "@/routes/fish-market";
-import { Shipyard } from "@/routes/shipyard";
+import { loadLedger } from "@/lib/market";
+import { HARBOR_UPDATED } from "@/lib/harbor";
 import { ChatPage } from "@/routes/chat";
 import { SettingsPage } from "@/routes/settings";
 import {
@@ -67,6 +67,14 @@ function Index() {
   const [intro, setIntro] = useState(true);
   const [themeId, setThemeId] = useState(defaultTheme.id);
   const [shopOpen, setShopOpen] = useState(false);
+  const [shopTab, setShopTab] = useState<"gems" | "ships">("ships");
+  const [coins, setCoins] = useState(0);
+  useEffect(() => {
+    const sync = () => setCoins(loadLedger().coins);
+    sync();
+    window.addEventListener(HARBOR_UPDATED, sync);
+    return () => window.removeEventListener(HARBOR_UPDATED, sync);
+  }, []);
   const [questsOpen, setQuestsOpen] = useState(false);
   const [win, setWin] = useState<Win>(null);
   const [phase, setPhase] = useState(currentPhase());
@@ -121,7 +129,7 @@ function Index() {
 
   const handleDockAction = (action: DockAction) => {
     if (action === "chat") open("chat");
-    else if (action === "store") setShopOpen(true);
+    else if (action === "store") { setShopTab("ships"); setShopOpen(true); }
     else if (action === "quests") open("alerts");
     else if (action === "tribe") open("tribe");
     else if (action === "battle") open("enemies");
@@ -157,7 +165,7 @@ function Index() {
             className="hotspot"
             style={{ left: `${h.x}%`, top: `${h.y}%`, width: `${h.w}%`, height: `${h.h}%` }}
             onPointerEnter={() => playSfx("hover", 0.3)}
-            onClick={() => open(h.id === "fish" ? "fish" : "ship")}
+            onClick={() => open(h.id === "fish" ? "trade-fish" : "trade-ship")}
           >
             <span className="hotspot-ring" />
           </button>
@@ -171,7 +179,8 @@ function Index() {
           name={player?.name ?? "قبطان"}
           onAvatarClick={() => open("settings")}
           onGiftClick={() => setQuestsOpen(true)}
-          onTopUp={() => { playSfx("click", 0.7); setShopOpen(true); }}
+          coins={coins}
+          onTopUp={() => { playSfx("click", 0.7); setShopTab("gems"); setShopOpen(true); }}
         />
       </div>
 
@@ -190,7 +199,7 @@ function Index() {
 
       <BottomDock onAction={handleDockAction} />
 
-       {shopOpen && <GameStore activeId={themeId} onSelect={selectTheme} onClose={() => setShopOpen(false)} />}
+       {shopOpen && <GameStore key={shopTab} initialTab={shopTab} activeId={themeId} onSelect={selectTheme} onClose={() => setShopOpen(false)} />}
 
       {questsOpen && (
         <div className="daily-overlay" role="dialog" aria-label="المهام اليومية">
@@ -225,19 +234,9 @@ function Index() {
           <SettingsPage />
         </GameWindow>
       )}
-      {win === "fish" && (
-        <GameWindow title="سوق السمك" hint="بع صيدك وطوّر شباكك" size="lg" onClose={() => setWin(null)}>
-          <FishMarket />
-        </GameWindow>
-      )}
-      {win === "ship" && (
-        <GameWindow title="سوق السفن" hint="اشترِ وطوّر أسطولك" size="lg" onClose={() => setWin(null)}>
-          <Shipyard />
-        </GameWindow>
-      )}
       {(win === "trade-fish" || win === "trade-ship") && (
-        <GameWindow title="قاعة التداول" hint="أسعار حيّة وأوامر شراء وبيع" size="xl" onClose={() => setWin(null)}>
-          <TradingFloor start={win === "trade-fish" ? "fish" : "ship"} />
+        <GameWindow title={win === "trade-fish" ? "سوق السمك" : "سوق السفن"} hint={win === "trade-fish" ? "بع ما اصطادته سفنك" : "سفنك وسفن المتجر"} size="xl" onClose={() => setWin(null)}>
+          <TradingFloor key={win} start={win === "trade-fish" ? "fish" : "ship"} />
         </GameWindow>
       )}
 

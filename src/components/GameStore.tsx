@@ -9,7 +9,8 @@ import { fmt } from "@/lib/ships";
 
 import { currentPhase, phaseLabel, themes } from "@/lib/themes";
 import { playSfx } from "@/lib/sound";
-import { useArtworkMap } from "@/lib/artwork";
+import { useArtwork } from "@/lib/artwork";
+import { buyGear, buyShip, ownedShips } from "@/lib/harbor";
 
 type StoreTab = "gems" | "crew" | "weapons" | "armor" | "ships" | "worlds";
 type Product = {
@@ -30,8 +31,8 @@ const sectionTitle: Record<StoreTab, string> = {
   worlds: "الخلفيات",
 };
 
-export function GameStore({ activeId, onSelect, onClose }: { activeId: string; onSelect: (id: string) => void; onClose: () => void }) {
-  const [tab, setTab] = useState<StoreTab>("ships");
+export function GameStore({ activeId, onSelect, onClose, initialTab = "ships" }: { activeId: string; onSelect: (id: string) => void; onClose: () => void; initialTab?: StoreTab }) {
+  const [tab, setTab] = useState<StoreTab>(initialTab);
   const tabs = [
     { id: "gems" as const, label: "جواهر", icon: Gem },
     { id: "crew" as const, label: "طواقم", icon: Users },
@@ -41,7 +42,7 @@ export function GameStore({ activeId, onSelect, onClose }: { activeId: string; o
     { id: "worlds" as const, label: "خلفيات", icon: Crown },
   ];
 
-  const art = useArtworkMap();
+  const { map: art, ready } = useArtwork();
   const products = useMemo<Product[]>(() => {
     if (tab === "weapons") return WEAPONS.map((item, index) => ({ id: item.id, title: item.name, desc: `${item.desc} · قوة تدميرية ${item.power * 1000}`, price: item.price, currency: item.currency, art: art[`${item.id}:idle`] ? <img src={art[`${item.id}:idle`]} alt="" loading="lazy" /> : <GameSprite atlas="weapon" index={index} /> }));
     if (tab === "crew") return CREWS.map((item, index) => ({ id: item.id, title: item.name, desc: `${item.desc} · ${item.hours}H`, price: item.price, currency: item.currency, art: art[`${item.id}:idle`] ? <img src={art[`${item.id}:idle`]} alt="" loading="lazy" /> : <GameSprite atlas="crew" index={index} /> }));
@@ -53,11 +54,11 @@ export function GameStore({ activeId, onSelect, onClose }: { activeId: string; o
         desc: `${ship.fish.join(" · ")} · رحلة ${tripLabel(ship.tripSeconds)}${ship.source === "tribe" ? " · من القبيلة" : ""}`,
         price: ship.price,
         currency: ship.currency,
-        art: <img src={art[`ship-${ship.id}:idle`] ?? ship.hull} alt="" loading="lazy" />,
+        art: art[`ship-${ship.id}:idle`] || ready ? <img src={art[`ship-${ship.id}:idle`] ?? ship.hull} alt="" loading="lazy" /> : <span className="product-art-wait" aria-hidden="true" />,
       }));
 
     return [];
-  }, [tab, art]);
+  }, [tab, art, ready]);
 
   return (
     <div className="game-modal" role="dialog" aria-modal="true" aria-label="المتجر البحري" onClick={onClose}>
@@ -95,7 +96,7 @@ export function GameStore({ activeId, onSelect, onClose }: { activeId: string; o
             </>
           )}
           {tab === "gems" && <GemPacks art={art} />}
-          {products.length > 0 && <ProductPicker key={tab} items={products} />}
+          {products.length > 0 && <ProductPicker key={tab} items={products} isShips={tab === "ships"} />}
         </div>
       </section>
     </div>
@@ -119,7 +120,8 @@ function GemPacks({ art }: { art: Record<string, string> }) {
   );
 }
 
-function ProductPicker({ items }: { items: Product[] }) {
+function ProductPicker({ items, isShips }: { items: Product[]; isShips: boolean }) {
+  const [msg, setMsg] = useState("");
   const [pickedId, setPickedId] = useState(items[0]?.id ?? "");
   const [qty, setQty] = useState(1);
   const picked = items.find((item) => item.id === pickedId) ?? items[0];
@@ -146,11 +148,20 @@ function ProductPicker({ items }: { items: Product[] }) {
           <b>{qty}</b>
           <Button variant="ghost" size="icon" aria-label="زيادة" onClick={() => setQty((n) => Math.min(99, n + 1))}><Plus /></Button>
         </span>
-        <Button className="product-buy buy-confirm" disabled title="الشراء غير متاح حالياً">
+        <Button className="product-buy buy-confirm" disabled={isShips && ownedShips().includes(Number(picked.id.slice(5)))} onClick={() => {
+          playSfx("click", 0.8);
+          let err: string | null;
+          if (isShips) {
+            const ship = fleetCatalog.find((s) => `ship-${s.id}` === picked.id);
+            err = ship ? buyShip(ship) : "غير متاح";
+          } else err = buyGear(picked.id, picked.price, picked.currency, qty);
+          setMsg(err ?? `تم شراء ${picked.title} — ${isShips ? "انضمت لأسطولك" : "أضيف إلى مخزن العتاد"}`);
+        }}>
           <img src={picked.currency === "coin" ? "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/906f37c0-d530-4e50-a3ce-00deaaf40a02/coin.png" : "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/81b9318d-8399-478f-bd28-abec7665a1a6/gem.png"} alt="" />
-          {total === 0 ? "مجاني" : fmt(total)} · غير متاح
+          {total === 0 ? "مجاني" : fmt(isShips ? picked.price : total)} · شراء
         </Button>
       </footer>
+      {msg && <p className="mk-flash" role="status">{msg}</p>}
     </>
   );
 }

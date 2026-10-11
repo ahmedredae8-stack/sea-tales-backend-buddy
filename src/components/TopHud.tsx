@@ -88,7 +88,8 @@ export function TopHud({
             <span>اللاعب</span>
           </span>
           <strong className="royal-plate-name">{title}</strong>
-          <span className="royal-plate-sub">{name} · المستوى {level}</span>
+          <span className="royal-plate-sub royal-plate-player">{name}</span>
+          <span className="royal-plate-sub">المستوى {level}</span>
           <span className="royal-xp">
             <i style={{ width: `${Math.round(progress * 100)}%` }} />
           </span>

@@ -15,6 +15,7 @@ import { cachedLanes, defaultLanes, fetchLanes, type Lane } from "@/lib/fleetLay
 import { fmt } from "@/lib/ships";
 import { playSfx } from "@/lib/sound";
 import { useArtworkMap } from "@/lib/artwork";
+import catchBoard from "@/assets/ui/catch-board.jpg";
 import { landCatch, type CatchLine } from "@/lib/harbor";
 import { fleetCatalog } from "@/lib/fleetCatalog";
 import { resolveShipArtwork } from "@/lib/shipArtwork";
@@ -214,7 +215,7 @@ export function FishingFleet({ themeId, themeName }: { themeId: string; themeNam
         <div className="fleet-modal" role="dialog" aria-modal="true" aria-label="نتيجة الصيد" onClick={() => setHaulResult(null)}>
           <section className="haul-panel" dir="rtl" onClick={(event) => event.stopPropagation()}>
             <h2>نتيجة الصيد</h2>
-            <div className="haul-board">
+            <div className="haul-board" style={{ backgroundImage: `url(${catchBoard})` }}>
               {haulResult.map((line) => (
                 <p key={line.fish.id} className="haul-line"><img src={line.fish.img} alt="" /><span>{line.fish.name}</span><b>X{line.qty.toLocaleString("en-US")}</b></p>
               ))}
