@@ -5,6 +5,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { CaptainAvatar } from "@/components/GameSprite";
 import type { Player } from "@/lib/player";
 import { getTheme } from "@/lib/themes";
+import { ARMORS, CREWS, WEAPONS } from "@/lib/items";
+import { HARBOR_UPDATED, ownedGear } from "@/lib/harbor";
+import { useArtworkMap } from "@/lib/artwork";
+import { GameSprite } from "@/components/GameSprite";
 
 type Ranking = "events" | "damage" | "fish" | "tribes";
 const boards = [
@@ -36,9 +40,14 @@ export function InventoryWindow({ player }: { player: Player | null }) {
   const theme = getTheme(player?.theme_id ?? "");
   const [category, setCategory] = useState("أسلحة");
   const categories = ["أسلحة", "طواقم", "دروع", "خلفيات"];
+  const [gear, setGear] = useState<Record<string, number>>({});
+  const art = useArtworkMap();
+  useEffect(() => { const s = () => setGear(ownedGear()); s(); window.addEventListener(HARBOR_UPDATED, s); return () => window.removeEventListener(HARBOR_UPDATED, s); }, []);
+  const pool = category === "أسلحة" ? WEAPONS.map((w, i) => ({ id: w.id, name: w.name, atlas: "weapon" as const, i })) : category === "طواقم" ? CREWS.map((w, i) => ({ id: w.id, name: w.name, atlas: "crew" as const, i })) : ARMORS.map((w, i) => ({ id: w.id, name: w.name, atlas: "armor" as const, i }));
+  const mine = pool.filter((g) => (gear[g.id] ?? 0) > 0);
   return <div className="dock-content">
     <nav className="dock-tabs" aria-label="أقسام المخزن">{categories.map((item) => <Button key={item} variant="ghost" className={category === item ? "dock-tab active" : "dock-tab"} onClick={() => setCategory(item)}>{item}</Button>)}</nav>
-    {category === "خلفيات" && player ? <div className="inventory-world"><img src={theme.day.poster} alt="" /><div><strong>{theme.name}</strong><span>الخلفية الحالية</span></div></div> : <EmptyState icon={Shield} title={player ? `لا توجد ${category} في مخزنك` : "سجل دخولك لعرض مخزنك"} detail={player ? "ستظهر هنا مقتنياتك عند إتاحتها داخل اللعبة." : "المخزن مرتبط بحساب القبطان."} />}
+    {category === "خلفيات" && player ? <div className="inventory-world"><img src={theme.day.poster} alt="" /><div><strong>{theme.name}</strong><span>الخلفية الحالية</span></div></div> : category !== "خلفيات" && mine.length ? <ul className="gear-grid">{mine.map((g) => <li key={g.id} className="gear-card"><span className="gear-art">{art[`${g.id}:idle`] ? <img src={art[`${g.id}:idle`]} alt="" /> : <GameSprite atlas={g.atlas} index={g.i} />}</span><strong>{g.name}</strong><b>x{gear[g.id]}</b></li>)}</ul> : <EmptyState icon={Shield} title={`لا توجد ${category} في مخزنك` : "سجل دخولك لعرض مخزنك"} detail="اشترِ العتاد من المتجر وسيظهر هنا فوراً." />}
   </div>;
 }
 
