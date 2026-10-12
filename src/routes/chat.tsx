@@ -9,6 +9,7 @@ import { initials, isOnline, timeLabel, type Message, type Player } from "@/lib/
 import { playSfx } from "@/lib/sound";
 import { myMembership } from "@/lib/tribes";
 import { Button } from "@/components/ui/button";
+import { DemoCommunity } from "@/components/DemoCommunity";
 
 export const Route = createFileRoute("/chat")({
   head: () => ({
@@ -28,10 +29,10 @@ const PUBLIC = "public";
 
 export function ChatPage() {
   const { player, loading } = usePlayer();
+  const [demo, setDemo] = useState(false);
 
   if (loading) return <Splash />;
-  if (!player) return <Shell><SignInNotice /></Shell>;
-  return <Shell><ChatRoom me={player} /></Shell>;
+  return <Shell><nav className="community-mode" aria-label="نوع المجتمع"><Button variant="ghost" aria-pressed={!demo} onClick={() => setDemo(false)}>اللاعبون</Button><Button variant="ghost" aria-pressed={demo} onClick={() => setDemo(true)}>مجتمع تجريبي</Button></nav><div className="community-content">{demo ? <DemoCommunity /> : player ? <ChatRoom me={player} /> : <SignInNotice />}</div></Shell>;
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
@@ -197,20 +198,14 @@ function ChatRoom({ me }: { me: Player }) {
             subtitle="كل القباطنة"
             onClick={() => {
               setActive(PUBLIC);
+              setSection("public");
               setSidebar(false);
             }}
             icon={<Globe2 className="h-5 w-5" />}
           />
 
           <p className="px-2 pb-1 pt-4 text-xs font-semibold text-hud-subtle">الأصدقاء</p>
-          {friends.length === 0 && (
-            <Link
-              to="/friends"
-              className="flex items-center gap-2 rounded-lg px-3 py-3 text-sm text-hud-subtle transition hover:bg-hud-surface"
-            >
-              <Users className="h-4 w-4" /> أضف أصدقاء لبدء محادثة خاصة
-            </Link>
-          )}
+          {friends.length === 0 && <p className="text-sm text-hud-subtle">لا توجد محادثات خاصة بعد</p>}
           {friends.map((f) => (
             <ConversationRow
               key={f.id}

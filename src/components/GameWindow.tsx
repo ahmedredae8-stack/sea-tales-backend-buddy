@@ -2,6 +2,7 @@ import { X } from "lucide-react";
 import type { MouseEvent, ReactNode } from "react";
 
 import { playSfx } from "@/lib/sound";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   title: string;
@@ -47,9 +48,9 @@ export function GameWindow({ title, hint, onClose, children, size = "lg" }: Prop
             <h2>{title}</h2>
             {hint && <p>{hint}</p>}
           </div>
-          <button type="button" className="win-close" aria-label="إغلاق" onClick={close}>
+          <Button variant="ghost" size="icon" className="win-close" aria-label="إغلاق" onClick={close}>
             <X className="h-4 w-4" />
-          </button>
+          </Button>
         </header>
         <div className="win-embed" onClickCapture={interceptBack}>
           {children}

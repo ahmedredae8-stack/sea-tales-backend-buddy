@@ -1,4 +1,10 @@
 # Roadmap
+- [ ] Unify store and map ship market with shared ownership and fishing details.
+- [ ] Allow recall at any time; cap catch at trip duration and wait offshore until recalled.
+- [ ] Refine all shared window frames, transparent catch rows and a custom fish-market illustration.
+- [ ] Improve admin export for adopting permanent artwork defaults (actual adoption awaits owner's export).
+- [ ] Prevent pinch zoom inside the game on phones.
+- [ ] Add an explicitly labeled Saudi demo community without fake real-user records.
 - [x] Current request: connect developer studio poses to sea boats with live refresh.
 - [x] Current request: move day/night indicator below the upper HUD.
 - [x] Current request: repair and restyle settings, tribe, and messages windows.

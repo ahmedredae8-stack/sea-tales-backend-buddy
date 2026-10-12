@@ -17,3 +17,6 @@
 - Broadcast artwork updates and renew signed image URLs; mounted sea and store views must not retain stale art.
 - Use Nitro’s Vercel preset for external deployment; the Lovable harness retains its own managed target.
 - Scope social windows to the fixed stage and shared HUD tokens; viewport-sized children must not overflow embedded windows.
+- Render the store ship tab through TradingFloor, shared with the map market, so catalog and ownership cannot diverge.
+- Keep fishing duration/catch caps in fishingTrip and cancel per-boat timers on recall so late transitions cannot restart a returned trip.
+- Keep simulated community conversations separate from real messages and player records so demo activity never impersonates real users.

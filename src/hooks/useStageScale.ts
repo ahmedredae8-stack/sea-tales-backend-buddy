@@ -21,10 +21,21 @@ export function useStageScale(designWidth = 704, designHeight = 1504) {
     observer.observe(host);
     window.addEventListener("resize", fit);
     window.addEventListener("orientationchange", fit);
+    // Block pinch gestures only within the play-field; retain single-finger scrolling.
+    const stopPinch = (event: TouchEvent) => {
+      if (event.touches.length > 1) event.preventDefault();
+    };
+    const stopGesture = (event: Event) => event.preventDefault();
+    host.addEventListener("touchmove", stopPinch, { passive: false });
+    host.addEventListener("gesturestart", stopGesture, { passive: false });
+    host.addEventListener("gesturechange", stopGesture, { passive: false });
     return () => {
       observer.disconnect();
       window.removeEventListener("resize", fit);
       window.removeEventListener("orientationchange", fit);
+      host.removeEventListener("touchmove", stopPinch);
+      host.removeEventListener("gesturestart", stopGesture);
+      host.removeEventListener("gesturechange", stopGesture);
     };
   }, [designWidth, designHeight]);
 
