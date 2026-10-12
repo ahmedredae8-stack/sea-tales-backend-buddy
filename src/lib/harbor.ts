@@ -1,5 +1,6 @@
 import { fleetCatalog, starterShip, type FleetShip } from "@/lib/fleetCatalog";
 import { loadLedger, saveLedger, type Ledger } from "@/lib/market";
+import { catchQuantity } from "@/lib/fishingTrip";
 
 /** Local harbor state: owned ships and fish in the hold. Stored in the shared ledger. */
 const OWNED_KEY = "bay:owned-ships";
@@ -65,12 +66,16 @@ export function buyShip(ship: FleetShip): string | null {
 export type CatchLine = { fish: Fish; qty: number };
 
 /** Roll a catch sized by the trip length of the catalog ship, and put it in the hold. */
-export function landCatch(catalogId: number): CatchLine[] {
+export function landCatch(catalogId: number, elapsedMs?: number): CatchLine[] {
   const ship = fleetCatalog.find((s) => s.id === catalogId) ?? starterShip;
   const lines: CatchLine[] = ship.fish
-    .map((name) => FISH.find((f) => f.name === name)!)
-    .filter(Boolean)
-    .map((fish) => ({ fish, qty: Math.max(1, Math.round(ship.tripSeconds * (1.5 + Math.random() * 2.5))) }));
+    .flatMap((name) => {
+      const fish = FISH.find((f) => f.name === name);
+      if (!fish) return [];
+      const capacity = Math.round(ship.tripSeconds * 3);
+      const qty = catchQuantity(capacity, elapsedMs ?? ship.tripSeconds * 1000, ship.tripSeconds);
+      return qty > 0 ? [{ fish, qty }] : [];
+    });
   const ledger = loadLedger();
   const holdings = { ...ledger.holdings };
   for (const l of lines) holdings[l.fish.id] = (holdings[l.fish.id] ?? 0) + l.qty;

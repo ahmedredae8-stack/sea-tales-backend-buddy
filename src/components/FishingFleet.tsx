@@ -15,12 +15,12 @@ import { cachedLanes, defaultLanes, fetchLanes, type Lane } from "@/lib/fleetLay
 import { fmt } from "@/lib/ships";
 import { playSfx } from "@/lib/sound";
 import { useArtworkMap } from "@/lib/artwork";
-import catchBoard from "@/assets/ui/catch-board.jpg";
 import { landCatch, type CatchLine } from "@/lib/harbor";
+import { canRecall, fishingProgress } from "@/lib/fishingTrip";
 import { fleetCatalog } from "@/lib/fleetCatalog";
 import { resolveShipArtwork } from "@/lib/shipArtwork";
 
-type ShipState = "docked" | "sailingOut" | "turning" | "casting" | "fishing" | "hauling" | "sailingHome" | "sold";
+type ShipState = "docked" | "sailingOut" | "turning" | "casting" | "fishing" | "full" | "hauling" | "sailingHome" | "sold";
 type FleetShip = { id: number; state: ShipState };
 type ShipStyle = CSSProperties & {
   "--ship-x": string;
@@ -42,10 +42,10 @@ const delays = ["0ms", "420ms", "860ms"];
 
 
 /** States where the hull sits at the far end of its lane. */
-const atSea: ShipState[] = ["sailingOut", "turning", "casting", "fishing", "hauling"];
+const atSea: ShipState[] = ["sailingOut", "turning", "casting", "fishing", "full", "hauling"];
 /** States where the bow points back toward the shore. */
-const facingShore: ShipState[] = ["turning", "casting", "fishing", "hauling", "sailingHome"];
-const busyStates: ShipState[] = ["sailingOut", "turning", "casting", "hauling", "sailingHome"];
+const facingShore: ShipState[] = ["turning", "casting", "fishing", "full", "hauling", "sailingHome"];
+const busyStates: ShipState[] = ["hauling", "sailingHome"];
 
 export function FishingFleet({ themeId, themeName }: { themeId: string; themeName: string }) {
   const artwork = useArtworkMap();
@@ -64,8 +64,16 @@ export function FishingFleet({ themeId, themeName }: { themeId: string; themeNam
   const catalogId = [1, 2, 5, 6, 7, 10][hullIndex] ?? 1;
   const activeHull = resolveShipArtwork(artwork, catalogId, "idle", bundledHull);
   const timers = useRef<number[]>([]);
+  const shipTimers = useRef<Record<number, number[]>>({});
+  const trips = useRef<Record<number, { started: number; catalogId: number; duration: number; returning: boolean }>>({});
+  const [clock, setClock] = useState(0);
   const [haulResult, setHaulResult] = useState<CatchLine[] | null>(null);
   const tripMs = (fleetCatalog.find((s) => s.id === catalogId)?.tripSeconds ?? 30) * 1000;
+
+  useEffect(() => {
+    const ticker = window.setInterval(() => setClock(Date.now()), 500);
+    return () => window.clearInterval(ticker);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -89,33 +97,43 @@ export function FishingFleet({ themeId, themeName }: { themeId: string; themeNam
     setShips((current) => current.map((ship) => (ship.id === id ? { ...ship, state } : ship)));
   };
 
-  const later = (callback: () => void, delay: number) => {
-    timers.current.push(window.setTimeout(callback, delay));
+  const later = (callback: () => void, delay: number, id?: number) => {
+    const timer = window.setTimeout(callback, delay);
+    timers.current.push(timer);
+    if (id !== undefined) (shipTimers.current[id] ??= []).push(timer);
   };
 
   const sail = (ship: FleetShip) => {
     setSelected(null);
     playSfx("click", 0.55);
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches || document.documentElement.classList.contains("reduce-game-motion");
+    if (canRecall(ship.state)) { haul(ship.id); return; }
     if (ship.state === "docked") {
+      trips.current[ship.id] = { started: Date.now(), catalogId, duration: tripMs, returning: false };
       if (reducedMotion) {
         update(ship.id, "fishing");
-        later(() => haul(ship.id), tripMs);
+        later(() => update(ship.id, "full"), tripMs, ship.id);
         return;
       }
       update(ship.id, "sailingOut");
-      later(() => update(ship.id, "turning"), 2300);
-      later(() => update(ship.id, "casting"), 3150);
-      later(() => update(ship.id, "fishing"), 4600);
-      later(() => haul(ship.id), 4600 + tripMs);
+      later(() => update(ship.id, "turning"), 2300, ship.id);
+      later(() => update(ship.id, "casting"), 3150, ship.id);
+      later(() => update(ship.id, "fishing"), 4600, ship.id);
+      later(() => update(ship.id, "full"), tripMs, ship.id);
       return;
     }
   };
 
-  /** Bring the net up once the trip time is over, then show what was caught. */
+  /** Only the captain recalls the boat; catch is capped at its trip duration. */
   const haul = (id: number) => {
-    const done = () => { update(id, "docked"); setHaulResult(landCatch(catalogId)); playSfx("click", 0.8); };
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { done(); return; }
+    const trip = trips.current[id];
+    if (!trip || trip.returning) return;
+    trip.returning = true;
+    const elapsed = Math.min(trip.duration, Date.now() - trip.started);
+    shipTimers.current[id]?.forEach(window.clearTimeout);
+    shipTimers.current[id] = [];
+    const done = () => { update(id, "docked"); setHaulResult(landCatch(trip.catalogId, elapsed)); delete trips.current[id]; playSfx("click", 0.8); };
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || document.documentElement.classList.contains("reduce-game-motion")) { done(); return; }
     update(id, "hauling");
     later(() => update(id, "sailingHome"), 1500);
     later(done, 3900);
@@ -135,7 +153,9 @@ export function FishingFleet({ themeId, themeName }: { themeId: string; themeNam
         const lane = lanes[index];
         if (!lane) return null;
         const busy = busyStates.includes(ship.state);
-        const frame: ShipPose = poseOverride ?? (ship.state === "casting" ? "cast" : ship.state === "fishing" ? "submerged" : ship.state === "hauling" ? "haul" : "idle");
+        const frame: ShipPose = poseOverride ?? (ship.state === "casting" ? "cast" : ship.state === "fishing" || ship.state === "full" ? "submerged" : ship.state === "hauling" ? "haul" : "idle");
+        const trip = trips.current[ship.id];
+        const progress = trip ? fishingProgress(clock - trip.started, trip.duration / 1000) : 0;
         const style: ShipStyle = {
           "--ship-x": `${lane.dockX}%`,
           "--ship-y": `${lane.dockY}%`,
@@ -152,6 +172,7 @@ export function FishingFleet({ themeId, themeName }: { themeId: string; themeNam
         ].filter(Boolean).join(" ");
         return (
           <div key={ship.id} className={laneClasses} style={style}>
+            {trip && !busy && <span className="ship-catch-status">{ship.state === "full" ? "ممتلئة · العودة للميناء" : `الصيد ${Math.round(progress * 100)}٪`}</span>}
             {selected === ship.id && !busy && (
               <div className="ship-actions" role="menu" aria-label={`أوامر السفينة ${ship.id}`}>
                 <Button variant="ghost" role="menuitem" className="ship-action" onClick={() => sail(ship)} title={ship.state === "docked" ? "الذهاب للصيد" : "العودة للميناء"}>
@@ -215,7 +236,8 @@ export function FishingFleet({ themeId, themeName }: { themeId: string; themeNam
         <div className="fleet-modal" role="dialog" aria-modal="true" aria-label="نتيجة الصيد" onClick={() => setHaulResult(null)}>
           <section className="haul-panel" dir="rtl" onClick={(event) => event.stopPropagation()}>
             <h2>نتيجة الصيد</h2>
-            <div className="haul-board" style={{ backgroundImage: `url(${catchBoard})` }}>
+            <div className="haul-board">
+              {haulResult.length === 0 && <p className="mk-empty">عادت السفينة قبل جمع أي صيد</p>}
               {haulResult.map((line) => (
                 <p key={line.fish.id} className="haul-line"><img src={line.fish.img} alt="" /><span>{line.fish.name}</span><b>X{line.qty.toLocaleString("en-US")}</b></p>
               ))}
