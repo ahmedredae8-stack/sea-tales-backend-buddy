@@ -166,6 +166,7 @@
 
 /* ── Game stage: one fixed play-field on every device ────── */
 .game-root {
+  touch-action: pan-x pan-y;
   position: relative;
   display: grid;
   place-items: center;
@@ -2390,9 +2391,9 @@
 /* Catch result */
 .haul-panel { display: grid; gap: 1rem; width: min(92%, 26rem); justify-items: center; }
 .haul-panel h2 { font-size: 1.5rem; font-weight: 900; color: oklch(0.98 0 0); text-shadow: 0 2px 4px oklch(0 0 0 / 0.7); }
-.haul-board { width: 100%; min-height: 14rem; display: grid; align-content: start; gap: 0.5rem; padding: 0.8rem; border-radius: 0.5rem; border: 3px solid oklch(0.85 0.1 80); background: repeating-linear-gradient(180deg, oklch(0.45 0.07 55) 0 30px, oklch(0.38 0.06 50) 30px 33px); }
-.haul-line { display: flex; align-items: center; gap: 1rem; padding: 0.5rem 1rem; border-radius: 0.4rem; background: oklch(0.97 0.005 80); color: oklch(0.25 0.02 60); font-weight: 900; }
-.haul-line img { width: 3.5rem; height: 2.6rem; object-fit: contain; }
+.haul-board { width: 100%; min-height: 10rem; display: grid; align-content: center; gap: 0.5rem; padding: 0.8rem; border: 0; background: transparent; }
+.haul-line { display: grid; grid-template-columns: 4.5rem minmax(0,1fr) auto; align-items: center; gap: 1rem; padding: 0.5rem 0; background: transparent; color: var(--hud-text); font-weight: 900; }
+.haul-line img { width: 4.5rem; height: 4rem; object-fit: contain; }
 .haul-line b { margin-inline-start: auto; font-size: 1.2rem; }
 .haul-ok { background: linear-gradient(180deg, oklch(0.7 0.16 240), oklch(0.5 0.18 255)); color: oklch(0.98 0 0); border-color: oklch(0.85 0.08 230); box-shadow: 0 4px 0 oklch(0.35 0.12 255); }
 
