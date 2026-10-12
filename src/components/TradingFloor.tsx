@@ -4,9 +4,10 @@ import { fleetCatalog, tripLabel } from "@/lib/fleetCatalog";
 import { FISH, HARBOR_UPDATED, HOURS, buyShip, ownedShips, priceSeries, sellFish } from "@/lib/harbor";
 import { fmtCoins, loadLedger, type AssetKind, type Ledger } from "@/lib/market";
 import { useArtwork } from "@/lib/artwork";
-import marketBg from "@/assets/ui/fish-market-bg.jpg";
+import marketBg from "@/assets/ui/saudi-fish-market.jpg";
 import { resolveShipArtwork } from "@/lib/shipArtwork";
 import { playSfx } from "@/lib/sound";
+import { Button } from "@/components/ui/button";
 
 const COIN = "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/906f37c0-d530-4e50-a3ce-00deaaf40a02/coin.png";
 const GEM = "https://project--356242e8-144f-42b3-8292-474399c324ac.lovable.app/__l5e/assets-v1/81b9318d-8399-478f-bd28-abec7665a1a6/gem.png";
@@ -23,16 +24,17 @@ function useHarbor() {
   return { ledger, owned };
 }
 
-export function TradingFloor({ start = "fish" }: { start?: AssetKind }) {
+export function TradingFloor({ start = "fish", locked = false }: { start?: AssetKind; locked?: boolean }) {
   const [kind, setKind] = useState<AssetKind>(start);
   const { ledger, owned } = useHarbor();
   return (
-    <div dir="rtl" className={`mk mk-${kind}`} style={kind === "fish" ? { backgroundImage: `url(${marketBg})` } : undefined}>
+    <div dir="rtl" className={`mk mk-${kind}`}>
+      {kind === "fish" && <img className="mk-market-art" src={marketBg} alt="سوق الصيد في ميناء سعودي" width={1024} height={1536} loading="lazy" />}
       <header className="mk-top">
-        <div className="mk-tabs">
-          <button type="button" className={kind === "fish" ? "is-on" : ""} onClick={() => { playSfx("click", 0.5); setKind("fish"); }}>سوق السمك</button>
-          <button type="button" className={kind === "ship" ? "is-on" : ""} onClick={() => { playSfx("click", 0.5); setKind("ship"); }}>سوق السفن</button>
-        </div>
+        {!locked ? <div className="mk-tabs">
+          <Button variant="ghost" className={kind === "fish" ? "is-on" : ""} onClick={() => { playSfx("click", 0.5); setKind("fish"); }}>سوق السمك</Button>
+          <Button variant="ghost" className={kind === "ship" ? "is-on" : ""} onClick={() => { playSfx("click", 0.5); setKind("ship"); }}>سوق السفن</Button>
+        </div> : <strong>{kind === "ship" ? "أسطولك وميناء السفن" : "حصيلة الصيد"}</strong>}
         <span className="mk-wallet"><img src={COIN} alt="" /><b>{fmtCoins(ledger.coins)}</b></span>
       </header>
       {kind === "fish" ? <FishDesk ledger={ledger} /> : <ShipDesk ledger={ledger} owned={owned} />}
@@ -52,7 +54,7 @@ function FishDesk({ ledger }: { ledger: Ledger }) {
 
   if (!fish) return <p className="mk-empty">مخزنك فارغ — أرسل سفنك للصيد ثم عد لبيع ما اصطدته.</p>;
 
-  const price = series[series.length - 1]!;
+  const price = series[series.length - 1] ?? fish.base;
   const hi = Math.max(...series) * 1.1, lo = Math.min(...series) * 0.9;
   const pt = (v: number, i: number) => `${10 + i * (180 / (series.length - 1))},${90 - ((v - lo) / (hi - lo)) * 80}`;
   const ticks = [0, 1, 2, 3, 4].map((i) => lo + ((hi - lo) * i) / 4);
@@ -61,9 +63,9 @@ function FishDesk({ ledger }: { ledger: Ledger }) {
     <div className="mk-fish">
       <div className="mk-catch-row">
         {inHold.map((f) => (
-          <button key={f.id} type="button" className={f.id === fish.id ? "is-on" : ""} onClick={() => { playSfx("click", 0.45); setId(f.id); }}>
+          <Button variant="ghost" key={f.id} className={f.id === fish.id ? "is-on" : ""} onClick={() => { playSfx("click", 0.45); setId(f.id); }}>
             <img src={f.img} alt="" /><span>{f.name}</span><small>x{fmtCoins(ledger.holdings[f.id] ?? 0)}</small>
-          </button>
+          </Button>
         ))}
       </div>
       <div className="mk-quality">الجودة: 100%</div>
@@ -78,14 +80,14 @@ function FishDesk({ ledger }: { ledger: Ledger }) {
       <p className="mk-price">السعر الحالي: <b>{price}</b></p>
       <label className="mk-slider">
         <span>{fmtCoins(qty)}/{fmtCoins(have)}</span>
-        <input type="range" min={1} max={have} value={qty} onChange={(e) => setQty(Number(e.target.value))} />
+        <input aria-label="كمية السمك للبيع" type="range" min={1} max={have} value={qty} onChange={(e) => setQty(Number(e.target.value))} />
         <span className="mk-earn"><img src={COIN} alt="" />{fmtCoins(Math.round(qty * price))}</span>
       </label>
-      <button type="button" className="mk-sell" onClick={() => {
+      <Button className="mk-sell" onClick={() => {
         const r = sellFish(fish, qty, price);
         playSfx("click", 0.8);
         setMsg(typeof r === "string" ? r : `تم بيع ${fmtCoins(qty)} ${fish.name}`);
-      }}>بيع</button>
+      }}>بيع</Button>
       {msg && <p className="mk-flash" role="status">{msg}</p>}
     </div>
   );
@@ -106,9 +108,9 @@ function ShipDesk({ ledger, owned }: { ledger: Ledger; owned: number[] }) {
         {s.source === "tribe" && <div><dt>المصدر</dt><dd>القبيلة</dd></div>}
       </dl>
       {isMine ? <span className="mk-owned">في أسطولك</span> : (
-        <button type="button" disabled={s.currency === "coin" && ledger.coins < s.price} onClick={() => { playSfx("click", 0.7); const e = buyShip(s); setMsg(e ?? `انضمت ${s.name} إلى أسطولك`); }}>
+        <Button aria-label={`شراء ${s.name}`} disabled={s.currency !== "coin" || ledger.coins < s.price} title={s.currency !== "coin" ? "الشراء بالجواهر غير متاح حالياً" : undefined} onClick={() => { playSfx("click", 0.7); const e = buyShip(s); setMsg(e ?? `انضمت ${s.name} إلى أسطولك`); }}>
           <img src={s.currency === "coin" ? COIN : GEM} alt="" />{fmtCoins(s.price)}
-        </button>
+        </Button>
       )}
     </li>
   );

@@ -77,7 +77,7 @@ export function useArtwork() {
         inflight = fetchMap();
         const m = await inflight;
         if (alive) setMap(m);
-      } catch { if (alive) setReady(true); } finally { inflight = null; }
+      } catch { /* Never reveal legacy art when the published library is unavailable. */ } finally { inflight = null; }
     };
     void refresh();
     window.addEventListener(ARTWORK_UPDATED, refresh);
@@ -100,8 +100,9 @@ export async function exportArtwork() {
   for (const row of rows) { const k = `${row.subject}:${row.pose}`; if (!newest.has(k)) newest.set(k, row); }
   const out: Record<string, { path: string; url: string }> = {};
   for (const [k, row] of newest) {
-    const { data } = await supabase.storage.from("game-artwork").createSignedUrl(row.image_path, 60 * 60 * 24 * 365 * 5);
-    if (data?.signedUrl) out[k] = { path: row.image_path, url: data.signedUrl };
+    const { data, error } = await supabase.storage.from("game-artwork").createSignedUrl(row.image_path, 60 * 60 * 24 * 365 * 5);
+    if (error || !data?.signedUrl) throw error ?? new Error("تعذّر تصدير صورة");
+    out[k] = { path: row.image_path, url: data.signedUrl };
   }
-  return { exported_at: new Date().toISOString(), count: Object.keys(out).length, artwork: out };
+  return { version: 1, exported_at: new Date().toISOString(), count: Object.keys(out).length, artwork: out, baseline: { ...ARTWORK_BASELINE, ...Object.fromEntries(Object.entries(out).map(([key, value]) => [key, value.url])) } };
 }
